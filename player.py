@@ -5,7 +5,7 @@ from entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, create_attack, destroy_attack):
+    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, create_attack, destroy_attack, create_magic):
         super().__init__(groups)
         self.image = pygame.image.load('graphics/test/player.png').convert_alpha()
         self.rect = self.image.get_rect(topleft=pos)
@@ -24,6 +24,12 @@ class Player(Entity):
         self.attackable_sprites = attackable_sprites
         self.speed = 5
 
+        # general attack
+        self.attack_type = 'weapon'
+        self.can_switch_attack_type = True
+        self.attack_type_switch_time = None
+        self.switch_duration_cooldown = 200
+
         # weapon
         self.create_attack = create_attack
         self.destroy_attack = destroy_attack
@@ -32,6 +38,11 @@ class Player(Entity):
         self.can_switch_weapon = True
         self.weapon_switch_time = None
         self.switch_duration_cooldown = 200
+
+        # magic
+        self.create_magic = create_magic
+        self.magic_index = 0
+        self.magic = list(magic_data.keys())[self.magic_index]
 
         # stats
         self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 5, 'stamina': 100}
@@ -94,9 +105,26 @@ class Player(Entity):
 
             # attack input
             if keys[pygame.K_SPACE]:
+                if self.attack_type == 'weapon':
+                    self.attacking = True
+                    self.attack_time = pygame.time.get_ticks()
+                    self.create_attack()
+                else:
+                    self.attacking = True
+                    self.attack_time = pygame.time.get_ticks()
+                    style = list(magic_data.keys())[self.magic_index]
+                    strength = list(magic_data.values())[self.magic_index]['strength'] + self.stats['magic']
+                    cost = list(magic_data.values())[self.magic_index]['cost']
+                    self.create_magic(style, strength, cost)
+
+            # magic input
+            if keys[pygame.K_LCTRL]:
                 self.attacking = True
                 self.attack_time = pygame.time.get_ticks()
-                self.create_attack()
+                style = list(magic_data.keys())[self.magic_index]
+                strength = list(magic_data.values())[self.magic_index]['strength'] + self.stats['magic']
+                cost = list(magic_data.values())[self.magic_index]['cost']
+                self.create_magic(style, strength, cost)
 
     def get_status(self):
 
@@ -145,6 +173,11 @@ class Player(Entity):
         base_damage = self.stats['attack']
         weapon_damage = weapon_data[self.weapon]['damage']
         return base_damage + weapon_damage
+
+    def get_full_magic_damage(self):
+        base_damage = self.stats['magic']
+        spell_damage = magic_data[self.magic]['strength']
+        return base_damage + spell_damage
 
     def move_player(self, speed):
         if self.direction.magnitude() != 0:
@@ -196,6 +229,11 @@ class Player(Entity):
         else:
             self.stamina = self.stats['stamina']
 
+    def energy_recovery(self):
+        if self.energy < self.stats['energy']:
+            self.energy += 0.01 * self.stats['magic']
+        else:
+            self.energy = self.stats['energy']
 
     def update(self):
         self.input()
@@ -203,4 +241,4 @@ class Player(Entity):
         self.get_status()
         self.animate()
         self.move_player(self.speed)
-        # self.stamina_recovery()
+        self.energy_recovery()

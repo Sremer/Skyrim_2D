@@ -38,6 +38,11 @@ weapon_data = {
     'sai': {'cooldown': 80, 'damage': 10, 'graphic': 'graphics/weapons/sai/full.png'}
 }
 
+# magic
+magic_data = {
+    'flame': {'strength': 5, 'cost': 20, 'graphic': 'graphics/particles/flame/fire.png'},
+    'heal': {'strength': 20, 'cost': 10, 'graphic': 'graphics/particles/heal/heal.png'}}
+
 # enemy
 monster_data = {
     'squid': {'health': 100, 'exp': 100, 'damage': 20, 'attack_type': 'slash',
