@@ -11,6 +11,7 @@ class UI:
         # bar setup
         self.health_bar_rect = pygame.Rect((WIDTH // 2) - (HEALTH_BAR_WIDTH // 2), HEIGTH - 50, HEALTH_BAR_WIDTH, BAR_HEIGHT)
         self.energy_bar_rect = pygame.Rect(50, HEIGTH - 50, ENERGY_BAR_WIDTH, BAR_HEIGHT)
+        self.stamina_bar_rect = pygame.Rect((WIDTH - HEALTH_BAR_WIDTH + 10), HEIGTH - 50, ENERGY_BAR_WIDTH, BAR_HEIGHT)
 
     def show_bar(self, current, max_amount, bg_rect, color):
         # draw bg
@@ -29,3 +30,5 @@ class UI:
     def display(self, player):
         self.show_bar(player.health, player.stats['health'], self.health_bar_rect, HEALTH_COLOR)
         self.show_bar(player.energy, player.stats['energy'], self.energy_bar_rect, ENERGY_COLOR)
+        self.show_bar(player.stamina, player.stats['stamina'], self.stamina_bar_rect, STAMINA_COLOR)
+

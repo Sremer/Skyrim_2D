@@ -34,11 +34,12 @@ class Player(Entity):
         self.switch_duration_cooldown = 200
 
         # stats
-        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 5}
-        self.max_stats = {'health': 300, 'energy': 140, 'attack': 20, 'magic': 10, 'speed': 10}
+        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 5, 'stamina': 100}
+        self.max_stats = {'health': 300, 'energy': 140, 'attack': 20, 'magic': 10, 'speed': 10, 'stamina': 300}
         self.upgrade_cost = {'health': 100, 'energy': 100, 'attack': 100, 'magic': 100, 'speed': 100}
         self.health = self.stats['health']
         self.energy = self.stats['energy']
+        self.stamina = self.stats['stamina']
         self.exp = 5000
         self.speed = self.stats['speed']
 
@@ -79,6 +80,17 @@ class Player(Entity):
                 self.status = 'left'
             else:
                 self.direction.x = 0
+
+            if keys[pygame.K_LSHIFT] and 'idle' not in self.status:
+                if self.speed < self.stats['speed'] + 5 and self.stamina > 0:
+                    self.speed += 5
+                else:
+                    self.speed = self.stats['speed']
+
+                self.stamina -= 0.5
+            else:
+                self.speed = self.stats['speed']
+                self.stamina_recovery()
 
             # attack input
             if keys[pygame.K_SPACE]:
@@ -175,9 +187,20 @@ class Player(Entity):
                     if self.direction.y < 0:  # moving up
                         self.hitbox.top = sprite.hitbox.bottom
 
+    def stamina_recovery(self):
+        if self.stamina < 0:
+            self.stamina = 0
+
+        if self.stamina < self.stats['stamina']:
+            self.stamina += 0.3
+        else:
+            self.stamina = self.stats['stamina']
+
+
     def update(self):
         self.input()
         self.cooldowns()
         self.get_status()
         self.animate()
         self.move_player(self.speed)
+        # self.stamina_recovery()
