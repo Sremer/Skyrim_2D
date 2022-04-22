@@ -31,6 +31,20 @@ class Player(Entity):
         self.weapon_switch_time = None
         self.switch_duration_cooldown = 200
 
+        # stats
+        self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 5}
+        self.max_stats = {'health': 300, 'energy': 140, 'attack': 20, 'magic': 10, 'speed': 10}
+        self.upgrade_cost = {'health': 100, 'energy': 100, 'attack': 100, 'magic': 100, 'speed': 100}
+        self.health = self.stats['health']
+        self.energy = self.stats['energy']
+        self.exp = 5000
+        self.speed = self.stats['speed']
+
+        # damage timer
+        self.vulnerable = True
+        self.hurt_time = None
+        self.invulnerability_duration = 500
+
     def import_player_assets(self):
         character_path = 'graphics/player/'
         self.animations = {'up': [], 'down': [], 'left': [], 'right': [],
