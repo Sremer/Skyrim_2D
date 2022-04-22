@@ -111,8 +111,9 @@ class Enemy(Entity):
         self.rect = self.image.get_rect(center=self.hitbox.center)
 
         if not self.vulnerable:
-            alpha = self.wave_value()
-            self.image.set_alpha(alpha)
+            pass
+            #alpha = self.wave_value()
+            #self.image.set_alpha(alpha)
         else:
             self.image.set_alpha(255)
 
@@ -134,9 +135,9 @@ class Enemy(Entity):
             """
             else:
                 self.health -= player.get_full_magic_damage()
+            """
             self.hit_time = pygame.time.get_ticks()
             self.vulnerable = False
-            """
 
     def check_death(self):
         if self.health <= 0:
@@ -148,13 +149,54 @@ class Enemy(Entity):
         if not self.vulnerable:
             self.direction *= -self.resistance
 
+    def move_enemy(self, speed, player):
+        if self.direction.magnitude() != 0:
+            self.direction = self.direction.normalize()
+
+        self.hitbox.x += self.direction.x * speed
+        self.collision_enemy('horizontal', player)
+        self.hitbox.y += self.direction.y * speed
+        self.collision_enemy('vertical', player)
+        self.rect.center = self.hitbox.center
+
+    def collision_enemy(self, direction, player):
+        if direction == 'horizontal':
+            for sprite in self.obstacle_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.x > 0:  # moving right
+                        self.hitbox.right = sprite.hitbox.left
+                    if self.direction.x < 0:  # moving left
+                        self.hitbox.left = sprite.hitbox.right
+
+            if player.hitbox.colliderect(self.hitbox):
+                if self.direction.x > 0:  # moving right
+                    self.hitbox.right = player.hitbox.left
+                if self.direction.x < 0:  # moving left
+                    self.hitbox.left = player.hitbox.right
+
+        if direction == 'vertical':
+            for sprite in self.obstacle_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.y > 0:  # moving down
+                        self.hitbox.bottom = sprite.hitbox.top
+                    if self.direction.y < 0:  # moving up
+                        self.hitbox.top = sprite.hitbox.bottom
+
+            if player.hitbox.colliderect(self.hitbox):
+                if self.direction.y > 0:  # moving down
+                    self.hitbox.bottom = player.hitbox.top
+                if self.direction.y < 0:  # moving up
+                    self.hitbox.top = player.hitbox.bottom
+
+
     def update(self):
         self.hit_reaction()
-        self.move(self.speed)
+        # self.move(self.speed)
         self.animate()
         self.cooldowns()
         self.check_death()
 
     def enemy_update(self, player):
+        self.move_enemy(self.speed, player)
         self.get_status(player)
         self.actions(player)

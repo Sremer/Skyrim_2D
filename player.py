@@ -5,11 +5,12 @@ from entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, create_attack, destroy_attack):
+    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, create_attack, destroy_attack):
         super().__init__(groups)
         self.image = pygame.image.load('graphics/test/player.png').convert_alpha()
         self.rect = self.image.get_rect(topleft=pos)
         self.hitbox = self.rect.inflate(-6, HITBOX_OFFSET['player'])
+        self.sprite_type = 'player'
 
         # graphics setup
         self.import_player_assets()
@@ -20,6 +21,7 @@ class Player(Entity):
         self.attack_cooldown = 300
         self.attack_time = None
         self.obstacle_sprites = obstacle_sprites
+        self.attackable_sprites = attackable_sprites
         self.speed = 5
 
         # weapon
@@ -111,6 +113,10 @@ class Player(Entity):
                 self.attacking = False
                 self.destroy_attack()
 
+        if not self.vulnerable:
+            if current_time - self.hurt_time >= self.invulnerability_duration:
+                self.vulnerable = True
+
     def animate(self):
         animation = self.animations[self.status]
 
@@ -123,9 +129,31 @@ class Player(Entity):
         self.image = animation[int(self.frame_index)]
         self.rect = self.image.get_rect(center=self.hitbox.center)
 
-    def collision(self, direction):
+    def get_full_weapon_damage(self):
+        base_damage = self.stats['attack']
+        weapon_damage = weapon_data[self.weapon]['damage']
+        return base_damage + weapon_damage
+
+    def move_player(self, speed):
+        if self.direction.magnitude() != 0:
+            self.direction = self.direction.normalize()
+
+        self.hitbox.x += self.direction.x * speed
+        self.collision_player('horizontal')
+        self.hitbox.y += self.direction.y * speed
+        self.collision_player('vertical')
+        self.rect.center = self.hitbox.center
+
+    def collision_player(self, direction):
         if direction == 'horizontal':
             for sprite in self.obstacle_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.x > 0:  # moving right
+                        self.hitbox.right = sprite.hitbox.left
+                    if self.direction.x < 0:  # moving left
+                        self.hitbox.left = sprite.hitbox.right
+
+            for sprite in self.attackable_sprites:
                 if sprite.hitbox.colliderect(self.hitbox):
                     if self.direction.x > 0:  # moving right
                         self.hitbox.right = sprite.hitbox.left
@@ -140,9 +168,16 @@ class Player(Entity):
                     if self.direction.y < 0:  # moving up
                         self.hitbox.top = sprite.hitbox.bottom
 
+            for sprite in self.attackable_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.y > 0:  # moving down
+                        self.hitbox.bottom = sprite.hitbox.top
+                    if self.direction.y < 0:  # moving up
+                        self.hitbox.top = sprite.hitbox.bottom
+
     def update(self):
         self.input()
         self.cooldowns()
         self.get_status()
         self.animate()
-        self.move(self.speed)
+        self.move_player(self.speed)

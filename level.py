@@ -6,6 +6,7 @@ from player import Player
 from random import choice
 from weapon import Weapon
 from enemy import Enemy
+from ui import UI
 
 
 class Level:
@@ -25,6 +26,9 @@ class Level:
 
         # sprite setup
         self.create_map()
+
+        # user interface
+        self.ui = UI()
 
     def create_map(self):
         layout = {
@@ -59,6 +63,7 @@ class Level:
                                 self.player = Player((x, y),
                                     [self.visible_sprites],
                                     self.obstacle_sprites,
+                                    self.attackable_sprites,
                                     self.create_attack,
                                     self.destroy_attack,)
                             else:
@@ -90,8 +95,8 @@ class Level:
                             #for leaf in range(randint(3, 6)):
                                 #self.animation_player.create_grass_particles(pos - offset, [self.visible_sprites])
                             target_sprite.kill()
-                        #else:
-                            #target_sprite.get_damage(self.player, attack_sprite.sprite_type)
+                        else:
+                            target_sprite.get_damage(self.player, attack_sprite.sprite_type)
 
     def damage_player(self, amount, attack_type):
         if self.player.vulnerable:
@@ -103,6 +108,7 @@ class Level:
     def run(self):
         # update and draw the game
         self.visible_sprites.custom_draw(self.player)
+        self.ui.display(self.player)
         self.visible_sprites.update()
         self.visible_sprites.enemy_update(self.player)
         self.player_attack_logic()
