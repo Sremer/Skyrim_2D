@@ -118,13 +118,14 @@ class Player(Entity):
                     self.create_magic(style, strength, cost)
 
             # magic input
-            if keys[pygame.K_LCTRL]:
-                self.attacking = True
-                self.attack_time = pygame.time.get_ticks()
-                style = list(magic_data.keys())[self.magic_index]
-                strength = list(magic_data.values())[self.magic_index]['strength'] + self.stats['magic']
-                cost = list(magic_data.values())[self.magic_index]['cost']
-                self.create_magic(style, strength, cost)
+            if keys[pygame.K_LCTRL] and self.can_switch_attack_type:
+                self.can_switch_attack_type = False
+                self.attack_type_switch_time = pygame.time.get_ticks()
+
+                if self.attack_type == 'weapon':
+                    self.attack_type = 'magic'
+                else:
+                    self.attack_type = 'weapon'
 
     def get_status(self):
 
@@ -157,6 +158,10 @@ class Player(Entity):
             if current_time - self.hurt_time >= self.invulnerability_duration:
                 self.vulnerable = True
 
+        if not self.can_switch_attack_type:
+            if current_time - self.attack_type_switch_time >= self.switch_duration_cooldown:
+                self.can_switch_attack_type = True
+
     def animate(self):
         animation = self.animations[self.status]
 
@@ -168,6 +173,14 @@ class Player(Entity):
         # set the image
         self.image = animation[int(self.frame_index)]
         self.rect = self.image.get_rect(center=self.hitbox.center)
+
+        # flicker
+        if not self.vulnerable:
+            alpha = self.wave_value()
+            self.image.set_alpha(alpha)
+            self.image.set_alpha(alpha)
+        else:
+            self.image.set_alpha(255)
 
     def get_full_weapon_damage(self):
         base_damage = self.stats['attack']

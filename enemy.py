@@ -111,9 +111,8 @@ class Enemy(Entity):
         self.rect = self.image.get_rect(center=self.hitbox.center)
 
         if not self.vulnerable:
-            pass
-            #alpha = self.wave_value()
-            #self.image.set_alpha(alpha)
+            alpha = self.wave_value()
+            self.image.set_alpha(alpha)
         else:
             self.image.set_alpha(255)
 
@@ -132,10 +131,8 @@ class Enemy(Entity):
             self.direction = self.get_player_distance_direction(player)[1]
             if attack_type == 'weapon':
                 self.health -= player.get_full_weapon_damage()
-            """
             else:
                 self.health -= player.get_full_magic_damage()
-            """
             self.hit_time = pygame.time.get_ticks()
             self.vulnerable = False
 
