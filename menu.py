@@ -10,6 +10,8 @@ class Menu:
         self.player = player
         self.font = pygame.font.Font(UI_FONT, UI_FONT_SIZE)
         self.menu_type = 'General'
+        self.saved_menu_type = None
+        self.saved_item_type = None
         self.player = player
 
         # item creation
@@ -33,8 +35,9 @@ class Menu:
         # menus
         self.menus = {
             'General': {'attribute_nr': 3, 'attribute_names': ['Magic', 'Items', 'Quit']},
-            'Magic': {'attribute_nr': 3, 'attribute_names': ['flame', 'heal', 'Back']},
-            'Items': {'attribute_nr': 2, 'attribute_names': ['sword', 'Back']}
+            'Magic': {'attribute_nr': len(player.magic_inventory) + 1, 'attribute_names': player.magic_inventory + ['Back']},
+            'Items': {'attribute_nr': len(player.weapon_inventory) + 1, 'attribute_names': player.weapon_inventory + ['Back']},
+            'Hand Choice': {'attribute_nr': 2, 'attribute_names': ['Main-Hand', 'Off-Hand']}
         }
 
         # convert weapon dictionary
@@ -69,10 +72,15 @@ class Menu:
                 self.selection_time = pygame.time.get_ticks()
                 self.can_press = False
                 self.press_switch_time = pygame.time.get_ticks()
-                self.menu_type = self.item_list[self.selection_index].trigger(self.player, self.menu_type)
+                self.menu_type, item_type = self.item_list[self.selection_index].trigger(self.player, self.menu_type, self.saved_menu_type, self.saved_item_type)
+                if self.menu_type != 'Hand Choice':
+                    self.saved_menu_type = self.menu_type
+                if item_type != 'Main-Hand' and item_type != 'Off-Hand':
+                    self.saved_item_type = item_type
                 self.item_list.clear()
                 self.selection_index = 0
-                print(self.menu_type)
+                print(self.saved_menu_type)
+                print(self.saved_item_type)
 
     def selection_cooldown(self):
         if not self.can_move:
@@ -139,22 +147,35 @@ class General_Item:
         # draw
         surface.blit(title_surf, title_rect)
 
-    def trigger(self, player, menu_type):
+    def trigger(self, player, menu_type, saved_menu_type, saved_item_type):
         if self.item_type == 'General' or self.item_type == 'Magic' or self.item_type == 'Items':
-            return self.item_type
+            return self.item_type, None
+
         elif self.item_type == 'Quit':
             pygame.quit()
-        elif self.item_type == 'Back':
-            return 'General'
-        else:
-            if menu_type == 'Items':
-                player.attack_type = 'weapon'
-                player.weapon = self.item_type
-            else:
-                player.attack_type = 'magic'
-                player.magic = self.item_type
 
-            return 'General'
+        elif self.item_type == 'Back':
+            return 'General', None
+
+        elif menu_type == 'Hand Choice':
+            if self.item_type == 'Main-Hand':
+                if saved_menu_type == 'Items':
+                    player.attack_type = 'weapon'
+                    player.weapon = saved_item_type
+                else:
+                    player.attack_type = 'magic'
+                    player.magic = saved_item_type
+            else:
+                if saved_menu_type == 'Items':
+                    player.offhand_attack_type = 'weapon'
+                    player.offhand_weapon = saved_item_type
+                else:
+                    player.offhand_attack_type = 'magic'
+                    player.offhand_magic = saved_item_type
+
+            return 'General', None
+        else:
+            return 'Hand Choice', self.item_type
 
     def display(self, surface, selection_num, name):
         self.item_type = name

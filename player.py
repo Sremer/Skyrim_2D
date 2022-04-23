@@ -24,11 +24,16 @@ class Player(Entity):
         self.attackable_sprites = attackable_sprites
         self.speed = 5
 
+        # inventory
+        self.weapon_inventory = ['sword', 'lance']
+        self.magic_inventory = ['flame', 'heal']
+
         # general attack
         self.attack_type = 'weapon'
         self.can_switch_attack_type = True
         self.attack_type_switch_time = None
         self.switch_duration_cooldown = 200
+        self.current_weapon = 'sword'
 
         # offhand attack
         self.offhand_attack_type = 'fist'
@@ -110,26 +115,13 @@ class Player(Entity):
                 self.speed = self.stats['speed']
                 self.stamina_recovery()
 
-            # attack input
-            if keys[pygame.K_SPACE]:
-                if self.attack_type == 'weapon':
-                    self.attacking = True
-                    self.attack_time = pygame.time.get_ticks()
-                    self.create_attack()
-                else:
-                    self.attacking = True
-                    self.attack_time = pygame.time.get_ticks()
-                    style = self.magic
-                    strength = magic_data[self.magic]['strength'] + self.stats['magic']
-                    cost = magic_data[self.magic]['cost']
-                    self.create_magic(style, strength, cost)
-
             # magic input
             if keys[pygame.K_LALT]:
                 if self.offhand_attack_type == 'weapon':
                     self.attacking = True
                     self.attack_time = pygame.time.get_ticks()
-                    self.create_attack()
+                    self.create_attack('Off-Hand')
+                    self.current_weapon = self.offhand_weapon
                 elif self.offhand_attack_type == 'magic':
                     self.attacking = True
                     self.attack_time = pygame.time.get_ticks()
@@ -141,6 +133,20 @@ class Player(Entity):
                     self.attacking = True
                     self.attack_time = pygame.time.get_ticks()
 
+            # attack input
+            if keys[pygame.K_SPACE]:
+                if self.attack_type == 'weapon':
+                    self.attacking = True
+                    self.attack_time = pygame.time.get_ticks()
+                    self.create_attack('Main-Hand')
+                    self.current_weapon = self.weapon
+                else:
+                    self.attacking = True
+                    self.attack_time = pygame.time.get_ticks()
+                    style = self.magic
+                    strength = magic_data[self.magic]['strength'] + self.stats['magic']
+                    cost = magic_data[self.magic]['cost']
+                    self.create_magic(style, strength, cost)
 
     def get_status(self):
 
@@ -165,7 +171,7 @@ class Player(Entity):
         current_time = pygame.time.get_ticks()
 
         if self.attacking:
-            if current_time - self.attack_time >= self.attack_cooldown + weapon_data[self.weapon]['cooldown']:
+            if current_time - self.attack_time >= self.attack_cooldown + weapon_data[self.current_weapon]['cooldown']:
                 self.attacking = False
                 self.destroy_attack()
 
@@ -203,7 +209,7 @@ class Player(Entity):
 
     def get_full_weapon_damage(self):
         base_damage = self.stats['attack']
-        weapon_damage = weapon_data[self.weapon]['damage']
+        weapon_damage = weapon_data[self.current_weapon]['damage']
         return base_damage + weapon_damage
 
     def get_full_magic_damage(self):

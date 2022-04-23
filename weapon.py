@@ -2,13 +2,18 @@ import pygame
 
 
 class Weapon(pygame.sprite.Sprite):
-    def __init__(self, player, groups):
+    def __init__(self, player, groups, hand):
         super().__init__(groups)
         self.sprite_type = 'weapon'
         direction = player.status.split('_')[0]
+        weapon = None
+        if hand == 'Main-Hand':
+            weapon = player.weapon
+        else:
+            weapon = player.offhand_weapon
 
         # graphic
-        full_path = f'graphics/weapons/{player.weapon}/{direction}.png'
+        full_path = f'graphics/weapons/{weapon}/{direction}.png'
         self.image = pygame.image.load(full_path).convert_alpha()
 
         # placement
