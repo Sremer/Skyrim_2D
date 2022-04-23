@@ -30,6 +30,13 @@ class Player(Entity):
         self.attack_type_switch_time = None
         self.switch_duration_cooldown = 200
 
+        # offhand attack
+        self.offhand_attack_type = 'fist'
+        self.can_switch_offhand_attack = True
+        self.offhand_switch_time = None
+        self.offhand_magic = None
+        self.offhand_weapon = None
+
         # weapon
         self.create_attack = create_attack
         self.destroy_attack = destroy_attack
@@ -112,20 +119,28 @@ class Player(Entity):
                 else:
                     self.attacking = True
                     self.attack_time = pygame.time.get_ticks()
-                    style = list(magic_data.keys())[self.magic_index]
-                    strength = list(magic_data.values())[self.magic_index]['strength'] + self.stats['magic']
-                    cost = list(magic_data.values())[self.magic_index]['cost']
+                    style = self.magic
+                    strength = magic_data[self.magic]['strength'] + self.stats['magic']
+                    cost = magic_data[self.magic]['cost']
                     self.create_magic(style, strength, cost)
 
             # magic input
-            if keys[pygame.K_LCTRL] and self.can_switch_attack_type:
-                self.can_switch_attack_type = False
-                self.attack_type_switch_time = pygame.time.get_ticks()
-
-                if self.attack_type == 'weapon':
-                    self.attack_type = 'magic'
+            if keys[pygame.K_LALT]:
+                if self.offhand_attack_type == 'weapon':
+                    self.attacking = True
+                    self.attack_time = pygame.time.get_ticks()
+                    self.create_attack()
+                elif self.offhand_attack_type == 'magic':
+                    self.attacking = True
+                    self.attack_time = pygame.time.get_ticks()
+                    style = self.offhand_magic
+                    strength = magic_data[self.offhand_magic]['strength'] + self.stats['magic']
+                    cost = magic_data[self.offhand_magic]['cost']
+                    self.create_magic(style, strength, cost)
                 else:
-                    self.attack_type = 'weapon'
+                    self.attacking = True
+                    self.attack_time = pygame.time.get_ticks()
+
 
     def get_status(self):
 
@@ -161,6 +176,10 @@ class Player(Entity):
         if not self.can_switch_attack_type:
             if current_time - self.attack_type_switch_time >= self.switch_duration_cooldown:
                 self.can_switch_attack_type = True
+
+        if not self.can_switch_offhand_attack:
+            if current_time - self.offhand_switch_time >= self.switch_duration_cooldown:
+                self.can_switch_offhand_attack = True
 
     def animate(self):
         animation = self.animations[self.status]
