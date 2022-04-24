@@ -84,7 +84,8 @@ class Level:
                                     [self.visible_sprites, self.attackable_sprites],
                                     self.obstacle_sprites,
                                     self.damage_player,
-                                    self.trigger_death_particles)
+                                    self.trigger_death_particles,
+                                    self.add_exp)
 
     def create_magic(self, style, strength, cost):
         if style == 'heal':
@@ -127,13 +128,22 @@ class Level:
     def trigger_death_particles(self, pos, particle_type):
         self.animation_player.create_particles(particle_type, pos, self.visible_sprites)
 
+    def add_exp(self, amount):
+        self.player.exp += amount
+
     def toggle_menu(self):
         self.game_paused = not self.game_paused
+
+    def level_up(self):
+        if self.player.exp >= self.player.exp_to_level_up:
+            self.player.level_up()
+            self.menu.nr_level_ups += 1
 
     def run(self):
         # update and draw the game
         self.visible_sprites.custom_draw(self.player)
         self.ui.display(self.player)
+        self.level_up()
 
         if self.game_paused:
             self.menu.display()

@@ -16,6 +16,11 @@ class Player(Entity):
         self.import_player_assets()
         self.status = 'down'
 
+        # leveling
+        self.exp = 0
+        self.level = 1
+        self.exp_to_level_up = int(1000 * (.5 * self.level))
+
         # movement
         self.attacking = False
         self.attack_cooldown = 300
@@ -63,7 +68,6 @@ class Player(Entity):
         self.health = self.stats['health']
         self.energy = self.stats['energy']
         self.stamina = self.stats['stamina']
-        self.exp = 5000
         self.speed = self.stats['speed']
 
         # damage timer
@@ -147,6 +151,9 @@ class Player(Entity):
                     strength = magic_data[self.magic]['strength'] + self.stats['magic']
                     cost = magic_data[self.magic]['cost']
                     self.create_magic(style, strength, cost)
+
+            if keys[pygame.K_r]:
+                self.exp += 100
 
     def get_status(self):
 
@@ -273,6 +280,12 @@ class Player(Entity):
         else:
             self.energy = self.stats['energy']
 
+    def level_up(self):
+        if self.exp >= self.exp_to_level_up:
+            self.level += 1
+            self.exp = self.exp - self.exp_to_level_up
+            self.exp_to_level_up = int(1000 * (.5 * self.level))
+
     def update(self):
         self.input()
         self.cooldowns()
@@ -280,3 +293,4 @@ class Player(Entity):
         self.animate()
         self.move_player(self.speed)
         self.energy_recovery()
+        # self.level_up()

@@ -32,12 +32,17 @@ class Menu:
         # title
         self.pause_title = pygame.Rect(WIDTH // 2 - HEALTH_BAR_WIDTH, 80, HEALTH_BAR_WIDTH * 2, BAR_HEIGHT * 2)
 
+        # level up
+        self.nr_level_ups = 0
+        self.level_up = False
+
         # menus
         self.menus = {
             'General': {'attribute_nr': 3, 'attribute_names': ['Magic', 'Items', 'Quit']},
             'Magic': {'attribute_nr': len(player.magic_inventory) + 1, 'attribute_names': player.magic_inventory + ['Back']},
             'Items': {'attribute_nr': len(player.weapon_inventory) + 1, 'attribute_names': player.weapon_inventory + ['Back']},
-            'Hand Choice': {'attribute_nr': 2, 'attribute_names': ['Main-Hand', 'Off-Hand']}
+            'Hand Choice': {'attribute_nr': 2, 'attribute_names': ['Main-Hand', 'Off-Hand']},
+            'Level Up': {'attribute_nr': 3, 'attribute_names': ['Health', 'magic', 'Stamina']}
         }
 
         # convert weapon dictionary
@@ -72,6 +77,10 @@ class Menu:
                 self.selection_time = pygame.time.get_ticks()
                 self.can_press = False
                 self.press_switch_time = pygame.time.get_ticks()
+                if self.menu_type == 'Level Up':
+                    self.nr_level_ups -= 1
+                    if self.nr_level_ups < 0:
+                        self.nr_level_ups = 0
                 self.menu_type, item_type = self.item_list[self.selection_index].trigger(self.player, self.menu_type, self.saved_menu_type, self.saved_item_type)
                 if self.menu_type != 'Hand Choice':
                     self.saved_menu_type = self.menu_type
@@ -79,8 +88,8 @@ class Menu:
                     self.saved_item_type = item_type
                 self.item_list.clear()
                 self.selection_index = 0
-                print(self.saved_menu_type)
-                print(self.saved_item_type)
+                # print(self.saved_menu_type)
+                # print(self.saved_item_type)
 
     def selection_cooldown(self):
         if not self.can_move:
@@ -119,6 +128,8 @@ class Menu:
             self.item_list.append(item)
 
     def display(self):
+        if self.nr_level_ups:
+            self.menu_type = 'Level Up'
         if not self.item_list:
             self.create_items()
         self.display_title()
@@ -155,6 +166,29 @@ class General_Item:
             pygame.quit()
 
         elif self.item_type == 'Back':
+            return 'General', None
+
+        elif menu_type == 'Level Up':
+            print(self.item_type)
+            if self.item_type == 'Health':
+                if player.stats['health'] <= player.max_stats['health'] - 20:
+                    player.stats['health'] += 20
+                player.health = player.stats['health']
+                print(player.stats['health'])
+
+            elif self.item_type == 'magic':
+                if player.stats['energy'] <= player.max_stats['energy'] - 8:
+                    player.stats['energy'] += 8
+                player.energy = player.stats['energy']
+
+                if player.stats['magic'] <= player.max_stats['magic'] - 1:
+                    player.stats['magic'] += 1
+
+            else:
+                if player.stats['stamina'] <= player.max_stats['stamina'] - 20:
+                    player.stats['stamina'] += 20
+                player.stamina = player.stats['stamina']
+
             return 'General', None
 
         elif menu_type == 'Hand Choice':

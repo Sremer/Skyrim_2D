@@ -27,6 +27,7 @@ TEXT_COLOR = '#EEEEEE'
 HEALTH_COLOR = 'dark red'
 ENERGY_COLOR = 'dark blue'
 STAMINA_COLOR = 'dark green'
+EXP_COLOR = 'light blue'
 UI_BORDER_COLOR_ACTIVE = 'gold'
 
 # weapons

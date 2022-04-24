@@ -27,8 +27,26 @@ class UI:
         pygame.draw.rect(self.display_surface, color, current_rect)
         pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, bg_rect, 3)
 
+    def show_exp(self, player):
+        self.exp_bar_rect = pygame.Rect(90, 30, HEALTH_BAR_WIDTH, BAR_HEIGHT)
+        text_surf = self.font.render(str(player.level), False, TEXT_COLOR)
+        offset = 0
+        if player.level >= 100:
+            offset = 30
+        elif player.level >= 10:
+            offset = 15
+        x = 60 - offset
+        text_rect = text_surf.get_rect(topleft=(x, 30))
+
+        pygame.draw.rect(self.display_surface, UI_BG_COLOR, text_rect.inflate(20, 20))
+        self.display_surface.blit(text_surf, text_rect)
+        pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, text_rect.inflate(20, 20), 3)
+
+        self.show_bar(player.exp, player.exp_to_level_up, self.exp_bar_rect, EXP_COLOR)
+
     def display(self, player):
         self.show_bar(player.health, player.stats['health'], self.health_bar_rect, HEALTH_COLOR)
         self.show_bar(player.energy, player.stats['energy'], self.energy_bar_rect, ENERGY_COLOR)
         self.show_bar(player.stamina, player.stats['stamina'], self.stamina_bar_rect, STAMINA_COLOR)
+        self.show_exp(player)
 
