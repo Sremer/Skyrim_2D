@@ -170,15 +170,30 @@ class Item:
 
     def add_to_player(self, player):
         if self.item_type == 'weapon':
-            player.weapon_inventory.append(self.name)
+            if self.name in list(player.weapon_inventory.keys()):
+                player.weapon_inventory[self.name] += 1
+            else:
+                player.weapon_inventory[self.name] = 1
+
         elif self.item_type == 'armor':
-            player.armor_inventory.append(self.name)
+            if self.name in list(player.armor_inventory.keys()):
+                player.armor_inventory[self.name] += 1
+            else:
+                player.armor_inventory[self.name] = 1
+
         elif self.item_type == 'magic':
-            player.magic_inventory.append(self.name)
+            if self.name in list(player.magic_inventory.keys()):
+                player.magic_inventory[self.name] += 1
+            else:
+                player.magic_inventory[self.name] = 1
+
         elif self.item_type == 'Take All':
             pass
         else:
-            player.misc_inventory.append(self.name)
+            if self.name in list(player.misc_inventory.keys()):
+                player.misc_inventory[self.name] += 1
+            else:
+                player.misc_inventory[self.name] = 1
 
     def display(self, surface, selection_num):
 

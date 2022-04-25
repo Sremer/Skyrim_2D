@@ -26,6 +26,9 @@ class Player(Entity):
         self.level = 1
         self.exp_to_level_up = int(1000 * (.5 * self.level))
 
+        # money
+        self.money = 0
+
         # movement
         self.attacking = False
         self.attack_cooldown = 300
@@ -36,10 +39,21 @@ class Player(Entity):
         self.speed = 5
 
         # inventory
-        self.weapon_inventory = ['sword', 'axe', 'rapier', 'sai']
-        self.magic_inventory = ['flame', 'heal']
-        self.armor_inventory = ['steel', 'skin']
-        self.misc_inventory = []
+        self.weapon_inventory = {
+            'sword': 1,
+            'axe': 1,
+            'rapier': 1,
+            'sai': 1
+        }
+        self.magic_inventory = {
+            'flame': 1,
+            'heal': 1
+        }
+        self.armor_inventory = {
+            'skin': 1,
+            'steel': 1
+        }
+        self.misc_inventory = {}
         self.show_loot = show_loot
 
         # general attack
