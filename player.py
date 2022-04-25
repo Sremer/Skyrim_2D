@@ -36,9 +36,10 @@ class Player(Entity):
         self.speed = 5
 
         # inventory
-        self.weapon_inventory = ['sword', 'lance', 'axe', 'rapier', 'sai']
+        self.weapon_inventory = ['sword', 'axe', 'rapier', 'sai']
         self.magic_inventory = ['flame', 'heal']
         self.armor_inventory = ['steel', 'skin']
+        self.misc_inventory = []
         self.show_loot = show_loot
 
         # general attack

@@ -19,7 +19,6 @@ class Menu:
         self.height = self.display_surface.get_size()[1] * 0.15
         self.width = self.display_surface.get_size()[0] // 7
         self.item_list = []
-        self.loot_item_list = []
 
         # selection system
         self.selection_index = 0
@@ -39,15 +38,7 @@ class Menu:
         self.level_up = False
 
         # menus
-        self.menus = {
-            'General': {'attribute_nr': 3, 'attribute_names': ['Magic', 'Items', 'Quit']},
-            'Items': {'attribute_nr': 3, 'attribute_names': ['Weapons', 'Armor', 'Back']},
-            'Magic': {'attribute_nr': len(player.magic_inventory) + 1, 'attribute_names': player.magic_inventory + ['Back']},
-            'Weapons': {'attribute_nr': len(player.weapon_inventory) + 1, 'attribute_names': player.weapon_inventory + ['Back']},
-            'Armor': {'attribute_nr': len(player.armor_inventory) + 1, 'attribute_names': player.armor_inventory + ['Back']},
-            'Hand Choice': {'attribute_nr': 2, 'attribute_names': ['Main-Hand', 'Off-Hand']},
-            'Level Up': {'attribute_nr': 3, 'attribute_names': ['Health', 'magic', 'Stamina']}
-        }
+        self.menus = None
 
         # convert weapon dictionary
         self.weapon_graphics = []
@@ -100,40 +91,6 @@ class Menu:
                     self.saved_item_type = item_type
                 self.item_list.clear()
                 self.selection_index = 0
-                # print(self.saved_menu_type)
-                # print(self.saved_item_type)
-
-    def loot_input(self, num_loot):
-        keys = pygame.key.get_pressed()
-        attribute_nr = num_loot
-
-        if self.can_move:
-            if keys[pygame.K_d] and self.selection_index < attribute_nr - 1:
-                self.selection_index += 1
-                self.can_move = False
-                self.selection_time = pygame.time.get_ticks()
-            elif keys[pygame.K_a] and self.selection_index >= 1:
-                self.selection_index -= 1
-                self.can_move = False
-                self.selection_time = pygame.time.get_ticks()
-            elif keys[pygame.K_w] and self.selection_index - self.num_items_in_row >= 0:
-                self.selection_index -= self.num_items_in_row
-                self.can_move = False
-                self.selection_time = pygame.time.get_ticks()
-            elif keys[pygame.K_s] and self.selection_index < attribute_nr - self.num_items_in_row:
-                self.selection_index += self.num_items_in_row
-                self.can_move = False
-                self.selection_time = pygame.time.get_ticks()
-
-            if keys[pygame.K_SPACE]:
-                self.can_move = False
-                self.selection_time = pygame.time.get_ticks()
-                self.can_press = False
-                self.press_switch_time = pygame.time.get_ticks()
-                self.menu_type, item_type = self.loot_item_list[self.selection_index].trigger(self.player, self.menu_type, self.saved_menu_type, self.saved_item_type)
-                return False
-
-        return True
 
     def selection_cooldown(self):
         if not self.can_move:
@@ -148,14 +105,6 @@ class Menu:
 
     def display_title(self):
         text_surf = self.font.render('Game Paused', False, TEXT_COLOR)
-        text_rect = text_surf.get_rect(center=(WIDTH // 2, 100))
-
-        pygame.draw.rect(self.display_surface, UI_BG_COLOR, self.pause_title)
-        self.display_surface.blit(text_surf, text_rect)
-        pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, self.pause_title, 3)
-
-    def display_title_loot(self):
-        text_surf = self.font.render('Loot', False, TEXT_COLOR)
         text_rect = text_surf.get_rect(center=(WIDTH // 2, 100))
 
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, self.pause_title)
@@ -189,34 +138,19 @@ class Menu:
             item = General_Item(left, top, self.width, self.height, index, self.font)
             self.item_list.append(item)
 
-    def create_loot_items(self, num_loot):
-        # self.item_list.clear()
-        attribute_nr = num_loot
-
-        for item, index in enumerate(range(attribute_nr)):
-            # horizontal position
-            full_width = self.display_surface.get_size()[0]
-            increment = 0
-            if attribute_nr <= self.num_items_in_row:
-                increment = (full_width // attribute_nr)
-            else:
-                increment = (full_width // self.num_items_in_row)
-
-            left_offset = item % self.num_items_in_row
-            left = (left_offset * increment) + (increment - self.width) // 2
-
-            # vertical position
-            top_offset = int(item // self.num_items_in_row) * 75
-
-            offset = int(item // self.num_items_in_row + 1) * 0.3
-
-            top = self.display_surface.get_size()[1] * offset - top_offset
-
-            # create the object
-            item = General_Item(left, top, self.width, self.height, index, self.font)
-            self.loot_item_list.append(item)
+    def reload_menu_items(self, player):
+        self.menus = {
+            'General': {'attribute_nr': 3, 'attribute_names': ['Magic', 'Items', 'Quit']},
+            'Items': {'attribute_nr': 3, 'attribute_names': ['Weapons', 'Armor', 'Back']},
+            'Magic': {'attribute_nr': len(player.magic_inventory) + 1, 'attribute_names': player.magic_inventory + ['Back']},
+            'Weapons': {'attribute_nr': len(player.weapon_inventory) + 1, 'attribute_names': player.weapon_inventory + ['Back']},
+            'Armor': {'attribute_nr': len(player.armor_inventory) + 1, 'attribute_names': player.armor_inventory + ['Back']},
+            'Hand Choice': {'attribute_nr': 2, 'attribute_names': ['Main-Hand', 'Off-Hand']},
+            'Level Up': {'attribute_nr': 3, 'attribute_names': ['Health', 'magic', 'Stamina']}
+        }
 
     def display(self):
+        self.reload_menu_items(self.player)
         if self.nr_level_ups:
             self.menu_type = 'Level Up'
         if not self.item_list:
@@ -229,20 +163,6 @@ class Menu:
             name = self.menus[self.menu_type]['attribute_names'][index]
             item.display(self.display_surface, self.selection_index, name)
 
-    def show_loot(self, loot_sprite):
-        self.menu_type = 'Loot'
-        if not self.loot_item_list:
-            self.create_loot_items(len(loot_sprite.loot))
-        self.display_title_loot()
-        paused = self.loot_input(len(loot_sprite.loot))
-        self.selection_cooldown()
-
-        for index, item in enumerate(self.loot_item_list):
-            name = loot_sprite.loot[index]
-            item.display(self.display_surface, self.selection_index, name)
-
-        return paused
-
 
 class General_Item:
     def __init__(self, l, t, w, h, index, font):
@@ -254,12 +174,25 @@ class General_Item:
     def display_names(self, surface, name, selected):
         color = TEXT_COLOR
 
-        # title
-        title_surf = self.font.render(name, False, color)
-        title_rect = title_surf.get_rect(midtop=self.rect.midtop + pygame.math.Vector2(0, 20))
+        if ', ' in name:
+            new_name = name.split(' ')
+            # title
+            title_surf = self.font.render(new_name[0], False, color)
+            title_rect = title_surf.get_rect(midtop=self.rect.midtop + pygame.math.Vector2(0, 20))
+            title1_surf = self.font.render(new_name[1], False, color)
+            title1_rect = title_surf.get_rect(midtop=self.rect.midtop + pygame.math.Vector2(0, 50))
 
-        # draw
-        surface.blit(title_surf, title_rect)
+            # draw
+            surface.blit(title_surf, title_rect)
+            surface.blit(title1_surf, title1_rect)
+
+        else:
+            # title
+            title_surf = self.font.render(name, False, color)
+            title_rect = title_surf.get_rect(midtop=self.rect.midtop + pygame.math.Vector2(0, 20))
+
+            # draw
+            surface.blit(title_surf, title_rect)
 
     def trigger(self, player, menu_type, saved_menu_type, saved_item_type):
         if self.item_type == 'General' or self.item_type == 'Magic' or self.item_type == 'Items' or self.item_type == 'Weapons' or self.item_type == 'Armor':

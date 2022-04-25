@@ -11,6 +11,7 @@ from particles import AnimationPlayer
 from menu import Menu
 from magic import MagicPlayer
 from Loot import Loot
+from loot_menu import LootMenu
 
 
 class Level:
@@ -19,7 +20,10 @@ class Level:
         # get the display surface
         self.display_surface = pygame.display.get_surface()
         self.game_paused = False
+
+        # loot system
         self.loot_paused = False
+        self.loot_menu = None
 
         # sprite group setup
         self.visible_sprites = YSortCameraGroup()
@@ -94,6 +98,9 @@ class Level:
                                     self.add_exp,
                                     self.create_loot)
 
+        # create loot menu
+        self.loot_menu = LootMenu(self.player)
+
     def create_magic(self, style, strength, cost):
         if style == 'heal':
             self.magic_player.heal(self.player, strength, cost, [self.visible_sprites])
@@ -164,7 +171,7 @@ class Level:
             self.menu.display()
 
         elif self.loot_paused:
-            self.loot_paused = self.menu.show_loot(self.current_loot_sprite)
+            self.loot_paused = self.loot_menu.display(self.current_loot_sprite)
             if not self.loot_paused:
                 self.current_loot_sprite.kill()
 
@@ -172,6 +179,12 @@ class Level:
             self.visible_sprites.update()
             self.visible_sprites.enemy_update(self.player)
             self.player_attack_logic()
+
+            # set the menu back
+            self.menu.menu_type = 'General'
+            self.menu.item_list.clear()
+            self.menu.selection_index = 0
+
 
 
 class YSortCameraGroup(pygame.sprite.Group):
