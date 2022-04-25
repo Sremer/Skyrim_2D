@@ -60,6 +60,7 @@ class LootMenu:
                 still_pause = self.item_list[self.selection_index].trigger(self.player, self.item_list)
                 self.item_list.remove(self.item_list[self.selection_index])
                 loot_sprite.loot.remove(loot_sprite.loot[self.selection_index])
+                self.selection_index = 0
 
                 if len(self.item_list) <= 1 or not still_pause:
                     return False
@@ -133,34 +134,33 @@ class Item:
         self.rect = pygame.Rect(l, t, w, h)
         self.index = index
         self.font = font
-        self.name = name
+        full_name = name.split(' x')
+        self.name = full_name[0]
         self.item_type = item_type
+        self.num_items = int(full_name[1])
 
     def display_names(self, surface, selected):
         color = TEXT_COLOR
 
-        if ', ' in self.name:
-            new_name = self.name.split(' ')
-            # title
-            title_surf = self.font.render(new_name[0], False, color)
-            title_rect = title_surf.get_rect(midtop=self.rect.midtop + pygame.math.Vector2(0, 20))
-            title1_surf = self.font.render(new_name[1], False, color)
-            title1_rect = title_surf.get_rect(midtop=self.rect.midtop + pygame.math.Vector2(0, 50))
+        title_surf = self.font.render(self.name, False, color)
+        title_rect = title_surf.get_rect(midtop=self.rect.midtop + pygame.math.Vector2(0, 20))
 
-            # draw
-            surface.blit(title_surf, title_rect)
-            surface.blit(title1_surf, title1_rect)
+        # draw
+        surface.blit(title_surf, title_rect)
 
-        else:
+        if self.num_items > 1:
             # title
-            title_surf = self.font.render(self.name, False, color)
-            title_rect = title_surf.get_rect(midtop=self.rect.midtop + pygame.math.Vector2(0, 20))
+            title_surf = self.font.render('x' + str(self.num_items), False, color)
+            title_rect = title_surf.get_rect(midtop=self.rect.midtop + pygame.math.Vector2(0, 55))
 
             # draw
             surface.blit(title_surf, title_rect)
 
     def trigger(self, player, item_list):
-        if self.item_type == 'Take All':
+        if self.item_type == 'Exit':
+            return False
+
+        elif self.item_type == 'Take All':
             for item in item_list:
                 item.add_to_player(player)
             return False
@@ -169,31 +169,39 @@ class Item:
             return True
 
     def add_to_player(self, player):
-        if self.item_type == 'weapon':
-            if self.name in list(player.weapon_inventory.keys()):
-                player.weapon_inventory[self.name] += 1
-            else:
-                player.weapon_inventory[self.name] = 1
+        if self.item_type == 'gold':
+            player.money += self.num_items
+
+        elif self.item_type == 'weapon':
+            for i in range(self.num_items):
+                if self.name in list(player.weapon_inventory.keys()):
+                    player.weapon_inventory[self.name] += 1
+                else:
+                    player.weapon_inventory[self.name] = 1
 
         elif self.item_type == 'armor':
-            if self.name in list(player.armor_inventory.keys()):
-                player.armor_inventory[self.name] += 1
-            else:
-                player.armor_inventory[self.name] = 1
+            for i in range(self.num_items):
+                if self.name in list(player.armor_inventory.keys()):
+                    player.armor_inventory[self.name] += 1
+                else:
+                    player.armor_inventory[self.name] = 1
 
         elif self.item_type == 'magic':
-            if self.name in list(player.magic_inventory.keys()):
-                player.magic_inventory[self.name] += 1
-            else:
-                player.magic_inventory[self.name] = 1
+            for i in range(self.num_items):
+                if self.name in list(player.magic_inventory.keys()):
+                    player.magic_inventory[self.name] += 1
+                else:
+                    player.magic_inventory[self.name] = 1
 
         elif self.item_type == 'Take All':
             pass
+
         else:
-            if self.name in list(player.misc_inventory.keys()):
-                player.misc_inventory[self.name] += 1
-            else:
-                player.misc_inventory[self.name] = 1
+            for i in range(self.num_items):
+                if self.name in list(player.misc_inventory.keys()):
+                    player.misc_inventory[self.name] += 1
+                else:
+                    player.misc_inventory[self.name] = 1
 
     def display(self, surface, selection_num):
 

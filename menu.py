@@ -32,6 +32,7 @@ class Menu:
 
         # title
         self.pause_title = pygame.Rect(WIDTH // 2 - HEALTH_BAR_WIDTH, 80, HEALTH_BAR_WIDTH * 2, BAR_HEIGHT * 2)
+        self.gold_title = pygame.Rect(WIDTH // 2 - HEALTH_BAR_WIDTH // 2, 130, HEALTH_BAR_WIDTH, BAR_HEIGHT * 2)
 
         # level up
         self.nr_level_ups = 0
@@ -79,10 +80,6 @@ class Menu:
                 if self.menu_type != 'Hand Choice':
                     self.saved_item_type = self.menu_type
 
-                print(self.menu_type)
-                print(self.saved_item_type)
-                print(self.saved_item_name)
-
                 self.item_list.clear()
                 self.selection_index = 0
 
@@ -104,6 +101,14 @@ class Menu:
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, self.pause_title)
         self.display_surface.blit(text_surf, text_rect)
         pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, self.pause_title, 3)
+
+    def display_money(self):
+        text_surf = self.font.render('Gold: ' + str(self.player.money), False, TEXT_COLOR)
+        text_rect = text_surf.get_rect(center=(WIDTH // 2, 150))
+
+        pygame.draw.rect(self.display_surface, UI_BG_COLOR, self.gold_title)
+        self.display_surface.blit(text_surf, text_rect)
+        pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, self.gold_title, 3)
 
     def create_items(self):
 
@@ -160,6 +165,7 @@ class Menu:
         if not self.item_list:
             self.create_items()
         self.display_title()
+        self.display_money()
         self.input()
         self.selection_cooldown()
 
