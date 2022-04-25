@@ -10,6 +10,7 @@ from ui import UI
 from particles import AnimationPlayer
 from menu import Menu
 from magic import MagicPlayer
+from Loot import Loot
 
 
 class Level:
@@ -18,10 +19,13 @@ class Level:
         # get the display surface
         self.display_surface = pygame.display.get_surface()
         self.game_paused = False
+        self.loot_paused = False
 
         # sprite group setup
         self.visible_sprites = YSortCameraGroup()
         self.obstacle_sprites = pygame.sprite.Group()
+        self.loot_sprites = pygame.sprite.Group()
+        self.current_loot_sprite = None
 
         # attack sprites
         self.current_attack = []
@@ -73,9 +77,11 @@ class Level:
                                     [self.visible_sprites],
                                     self.obstacle_sprites,
                                     self.attackable_sprites,
+                                    self.loot_sprites,
                                     self.create_attack,
                                     self.destroy_attack,
-                                    self.create_magic)
+                                    self.create_magic,
+                                    self.show_loot)
                             else:
                                 monster_name = 'squid'
                                 Enemy(
@@ -85,7 +91,8 @@ class Level:
                                     self.obstacle_sprites,
                                     self.damage_player,
                                     self.trigger_death_particles,
-                                    self.add_exp)
+                                    self.add_exp,
+                                    self.create_loot)
 
     def create_magic(self, style, strength, cost):
         if style == 'heal':
@@ -120,10 +127,11 @@ class Level:
 
     def damage_player(self, amount, attack_type):
         if self.player.vulnerable:
-            self.player.health -= amount
+            self.player.health -= (amount - armor_data[self.player.armor_type]['defense'])
             self.player.vulnerable = False
             self.player.hurt_time = pygame.time.get_ticks()
             self.animation_player.create_particles(attack_type, self.player.rect.center, [self.visible_sprites])
+            print(self.player.health)
 
     def trigger_death_particles(self, pos, particle_type):
         self.animation_player.create_particles(particle_type, pos, self.visible_sprites)
@@ -139,6 +147,13 @@ class Level:
             self.player.level_up()
             self.menu.nr_level_ups += 1
 
+    def create_loot(self, pos):
+        Loot(pos, [self.visible_sprites, self.obstacle_sprites, self.loot_sprites])
+
+    def show_loot(self, loot_sprite):
+        self.loot_paused = True
+        self.current_loot_sprite = loot_sprite
+
     def run(self):
         # update and draw the game
         self.visible_sprites.custom_draw(self.player)
@@ -147,6 +162,12 @@ class Level:
 
         if self.game_paused:
             self.menu.display()
+
+        elif self.loot_paused:
+            self.loot_paused = self.menu.show_loot(self.current_loot_sprite)
+            if not self.loot_paused:
+                self.current_loot_sprite.kill()
+
         else:
             self.visible_sprites.update()
             self.visible_sprites.enemy_update(self.player)

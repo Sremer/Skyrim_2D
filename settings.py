@@ -7,6 +7,7 @@ HITBOX_OFFSET = {
     'player': -26,
     'object': -40,
     'grass': -10,
+    'loot': -40,
     'invisible': 0}
 
 # ui
@@ -37,6 +38,12 @@ weapon_data = {
     'axe': {'cooldown': 300, 'damage': 20, 'graphic': 'graphics/weapons/axe/full.png'},
     'rapier': {'cooldown': 50, 'damage': 8, 'graphic': 'graphics/weapons/rapier/full.png'},
     'sai': {'cooldown': 80, 'damage': 10, 'graphic': 'graphics/weapons/sai/full.png'}
+}
+
+# armor
+armor_data = {
+    'skin': {'defense': 0},
+    'steel': {'defense': 5}
 }
 
 # magic

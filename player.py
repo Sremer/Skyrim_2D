@@ -5,12 +5,17 @@ from entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, create_attack, destroy_attack, create_magic):
+    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, loot_sprites, create_attack, destroy_attack, create_magic, show_loot):
         super().__init__(groups)
         self.image = pygame.image.load('graphics/test/player.png').convert_alpha()
         self.rect = self.image.get_rect(topleft=pos)
         self.hitbox = self.rect.inflate(-6, HITBOX_OFFSET['player'])
         self.sprite_type = 'player'
+
+        # armor
+        self.armor_type = 'skin'
+        self.can_switch_armor = True
+        self.armor_switch_time = None
 
         # graphics setup
         self.import_player_assets()
@@ -27,11 +32,14 @@ class Player(Entity):
         self.attack_time = None
         self.obstacle_sprites = obstacle_sprites
         self.attackable_sprites = attackable_sprites
+        self.loot_sprites = loot_sprites
         self.speed = 5
 
         # inventory
-        self.weapon_inventory = ['sword', 'lance']
+        self.weapon_inventory = ['sword', 'lance', 'axe', 'rapier', 'sai']
         self.magic_inventory = ['flame', 'heal']
+        self.armor_inventory = ['steel', 'skin']
+        self.show_loot = show_loot
 
         # general attack
         self.attack_type = 'weapon'
@@ -76,7 +84,7 @@ class Player(Entity):
         self.invulnerability_duration = 500
 
     def import_player_assets(self):
-        character_path = 'graphics/player/'
+        character_path = f'graphics/player/{self.armor_type}/'
         self.animations = {'up': [], 'down': [], 'left': [], 'right': [],
                            'right_idle': [], 'left_idle': [], 'up_idle': [], 'down_idle': [],
                            'right_attack': [], 'left_attack': [], 'up_attack': [], 'down_attack': []}
@@ -194,6 +202,10 @@ class Player(Entity):
             if current_time - self.offhand_switch_time >= self.switch_duration_cooldown:
                 self.can_switch_offhand_attack = True
 
+        if not self.can_switch_armor:
+            if current_time - self.armor_switch_time >= self.switch_duration_cooldown:
+                self.can_switch_armor = True
+
     def animate(self):
         animation = self.animations[self.status]
 
@@ -236,6 +248,10 @@ class Player(Entity):
 
     def collision_player(self, direction):
         if direction == 'horizontal':
+            for sprite in self.loot_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    self.show_loot(sprite)
+
             for sprite in self.obstacle_sprites:
                 if sprite.hitbox.colliderect(self.hitbox):
                     if self.direction.x > 0:  # moving right
@@ -251,6 +267,10 @@ class Player(Entity):
                         self.hitbox.left = sprite.hitbox.right
 
         if direction == 'vertical':
+            for sprite in self.loot_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    self.show_loot(sprite)
+
             for sprite in self.obstacle_sprites:
                 if sprite.hitbox.colliderect(self.hitbox):
                     if self.direction.y > 0:  # moving down
@@ -287,6 +307,8 @@ class Player(Entity):
             self.exp_to_level_up = int(1000 * (.5 * self.level))
 
     def update(self):
+        if not self.can_switch_armor:
+            self.import_player_assets()
         self.input()
         self.cooldowns()
         self.get_status()
