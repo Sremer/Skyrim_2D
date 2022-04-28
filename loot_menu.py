@@ -175,16 +175,18 @@ class Item:
         elif self.item_type == 'weapon':
             for i in range(self.num_items):
                 if self.name in list(player.weapon_inventory.keys()):
-                    player.weapon_inventory[self.name] += 1
+                    player.weapon_inventory[self.name]['amount'] += 1
+                    player.weapon_inventory[self.name]['available'] += 1
                 else:
-                    player.weapon_inventory[self.name] = 1
+                    player.weapon_inventory[self.name] = {'amount': 1, 'available': 1}
 
         elif self.item_type == 'armor':
             for i in range(self.num_items):
                 if self.name in list(player.armor_inventory.keys()):
-                    player.armor_inventory[self.name] += 1
+                    player.armor_inventory[self.name]['amount'] += 1
+                    player.armor_inventory[self.name]['available'] += 1
                 else:
-                    player.armor_inventory[self.name] = 1
+                    player.armor_inventory[self.name] = {'amount': 1, 'available': 1}
 
         elif self.item_type == 'magic':
             for i in range(self.num_items):

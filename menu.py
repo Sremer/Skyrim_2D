@@ -137,23 +137,33 @@ class Menu:
             num_items = 0
             if index < attribute_nr - 1:
                 if self.menu_type == 'Weapons':
-                    num_items = self.player.weapon_inventory[names[index]]
+                    num_items = self.player.weapon_inventory[names[index]]['available']
                 elif self.menu_type == 'Magic':
                     num_items = self.player.magic_inventory[names[index]]
                 elif self.menu_type == 'Armor':
-                    num_items = self.player.armor_inventory[names[index]]
+                    num_items = self.player.armor_inventory[names[index]]['available']
 
             # create the object
             item = Item(left, top, self.width, self.height, index, self.font, names[index], self.menu_type, num_items)
             self.item_list.append(item)
 
     def reload_menu_items(self, player):
+        weapon_list = []
+        for weapon in list(player.weapon_inventory.keys()):
+            if player.weapon_inventory[weapon]['available'] >= 1:
+                weapon_list.append(weapon)
+
+        armor_list = []
+        for armor in list(player.armor_inventory.keys()):
+            if player.armor_inventory[armor]['available'] >= 1:
+                armor_list.append(armor)
+
         self.menus = {
             'General': {'attribute_nr': 3, 'attribute_names': ['Magic', 'Items', 'Quit']},
             'Items': {'attribute_nr': 3, 'attribute_names': ['Weapons', 'Armor', 'Back']},
             'Magic': {'attribute_nr': len(player.magic_inventory.keys()) + 1, 'attribute_names': list(player.magic_inventory.keys()) + ['Back']},
-            'Weapons': {'attribute_nr': len(player.weapon_inventory.keys()) + 1, 'attribute_names': list(player.weapon_inventory.keys()) + ['Back']},
-            'Armor': {'attribute_nr': len(player.armor_inventory.keys()) + 1, 'attribute_names': list(player.armor_inventory.keys()) + ['Back']},
+            'Weapons': {'attribute_nr': len(weapon_list) + 1, 'attribute_names': weapon_list + ['Back']},
+            'Armor': {'attribute_nr': len(armor_list) + 1, 'attribute_names': armor_list + ['Back']},
             'Hand Choice': {'attribute_nr': 2, 'attribute_names': ['Main-Hand', 'Off-Hand']},
             'Level Up': {'attribute_nr': 3, 'attribute_names': ['Health', 'magic', 'Stamina']}
         }
@@ -233,7 +243,9 @@ class Item:
             return 'General', None
 
         elif self.item_type == 'Armor':
+            player.armor_inventory[player.armor_type]['available'] += 1
             player.armor_type = self.name
+            player.armor_inventory[player.armor_type]['available'] -= 1
             player.can_switch_armor = False
             player.armor_switch_time = pygame.time.get_ticks()
 
@@ -243,14 +255,19 @@ class Item:
             if self.name == 'Main-Hand':
                 if saved_item_type == 'Weapons':
                     player.attack_type = 'weapon'
+                    player.weapon_inventory[player.weapon]['available'] += 1
                     player.weapon = saved_item_name
+                    player.weapon_inventory[player.weapon]['available'] -= 1
                 elif saved_item_type == 'Magic':
                     player.attack_type = 'magic'
                     player.magic = saved_item_name
             else:
                 if saved_item_type == 'Weapons':
                     player.offhand_attack_type = 'weapon'
+                    if player.offhand_weapon:
+                        player.weapon_inventory[player.offhand_weapon]['available'] += 1
                     player.offhand_weapon = saved_item_name
+                    player.weapon_inventory[player.offhand_weapon]['available'] -= 1
                 elif saved_item_type == 'Magic':
                     player.offhand_attack_type = 'magic'
                     player.offhand_magic = saved_item_name

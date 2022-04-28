@@ -29,6 +29,9 @@ class Player(Entity):
         # money
         self.money = 0
 
+        # class
+        self.class_type = 'None'
+
         # movement
         self.attacking = False
         self.attack_cooldown = 300
@@ -40,18 +43,18 @@ class Player(Entity):
 
         # inventory
         self.weapon_inventory = {
-            'sword': 1,
-            'axe': 1,
-            'rapier': 1,
-            'sai': 1
+            'sword': {'amount': 1, 'available': 0},
+            'axe': {'amount': 1, 'available': 1},
+            'rapier': {'amount': 1, 'available': 1},
+            'sai': {'amount': 1, 'available': 1}
         }
         self.magic_inventory = {
             'flame': 1,
             'heal': 1
         }
         self.armor_inventory = {
-            'skin': 1,
-            'steel': 1
+            'skin': {'amount': 1, 'available': 0},
+            'steel': {'amount': 1, 'available': 1}
         }
         self.misc_inventory = {}
         self.show_loot = show_loot
