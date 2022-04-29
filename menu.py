@@ -259,6 +259,8 @@ class Item:
                     player.weapon = saved_item_name
                     player.weapon_inventory[player.weapon]['available'] -= 1
                 elif saved_item_type == 'Magic':
+                    if player.attack_type == 'weapon':
+                        player.weapon_inventory[player.weapon]['available'] += 1
                     player.attack_type = 'magic'
                     player.magic = saved_item_name
             else:
@@ -269,6 +271,8 @@ class Item:
                     player.offhand_weapon = saved_item_name
                     player.weapon_inventory[player.offhand_weapon]['available'] -= 1
                 elif saved_item_type == 'Magic':
+                    if player.attack_type == 'weapon':
+                        player.weapon_inventory[player.offhand_weapon]['available'] += 1
                     player.offhand_attack_type = 'magic'
                     player.offhand_magic = saved_item_name
 

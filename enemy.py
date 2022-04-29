@@ -79,11 +79,11 @@ class Enemy(Entity):
     def get_status(self, player):
         distance = self.get_player_distance_direction(player)[0]
 
-        if distance <= self.attack_radius and self.can_attack:
+        if distance <= self.attack_radius and self.can_attack and player.visible:
             if self.status != 'attack':
                 self.frame_index = 0
             self.status = 'attack'
-        elif distance <= self.notice_radius:
+        elif distance <= self.notice_radius and player.visible:
             self.status = 'move'
         else:
             self.status = 'idle'
@@ -187,7 +187,6 @@ class Enemy(Entity):
                     self.hitbox.bottom = player.hitbox.top
                 if self.direction.y < 0:  # moving up
                     self.hitbox.top = player.hitbox.bottom
-
 
     def update(self):
         self.hit_reaction()

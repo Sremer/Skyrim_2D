@@ -108,6 +108,9 @@ class Level:
         if style == 'flame':
             self.magic_player.flame(self.player, cost, [self.visible_sprites, self.attack_sprites])
 
+        if style == 'invisibility':
+            self.magic_player.invisibility(self.player, cost, [self.visible_sprites])
+
     def create_attack(self, hand):
         self.current_attack.append(Weapon(self.player, [self.visible_sprites, self.attack_sprites], hand))
 
@@ -134,7 +137,14 @@ class Level:
 
     def damage_player(self, amount, attack_type):
         if self.player.vulnerable:
-            self.player.health -= (amount - armor_data[self.player.armor_type]['defense'])
+            class_bonus = 0
+            if armor_data[self.player.armor_type]['type'] in list(class_data[self.player.class_type]['multipliers'].keys()):
+                class_bonus += int(
+                    armor_data[self.player.armor_type]['defense'] * class_data[self.player.class_type]['multipliers'][
+                        armor_data[self.player.armor_type]['type']])
+            print(class_bonus)
+
+            self.player.health -= (amount - armor_data[self.player.armor_type]['defense'] - class_bonus)
             self.player.vulnerable = False
             self.player.hurt_time = pygame.time.get_ticks()
             self.animation_player.create_particles(attack_type, self.player.rect.center, [self.visible_sprites])
@@ -184,7 +194,6 @@ class Level:
             self.menu.menu_type = 'General'
             self.menu.item_list.clear()
             self.menu.selection_index = 0
-
 
 
 class YSortCameraGroup(pygame.sprite.Group):

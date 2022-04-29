@@ -18,6 +18,7 @@ class AnimationPlayer:
             'sparkle': import_folder('graphics/particles/sparkle'),
             'leaf_attack': import_folder('graphics/particles/leaf_attack'),
             'thunder': import_folder('graphics/particles/thunder'),
+            'smoke': import_folder('graphics/particles/smoke'),
 
             # monster deaths
             'squid': import_folder('graphics/particles/smoke_orange'),

@@ -11,6 +11,7 @@ class Player(Entity):
         self.rect = self.image.get_rect(topleft=pos)
         self.hitbox = self.rect.inflate(-6, HITBOX_OFFSET['player'])
         self.sprite_type = 'player'
+        self.visible = True
 
         # armor
         self.armor_type = 'skin'
@@ -30,7 +31,7 @@ class Player(Entity):
         self.money = 0
 
         # class
-        self.class_type = 'None'
+        self.class_type = 'rogue'
 
         # movement
         self.attacking = False
@@ -50,7 +51,8 @@ class Player(Entity):
         }
         self.magic_inventory = {
             'flame': 1,
-            'heal': 1
+            'heal': 1,
+            'invisibility': 1
         }
         self.armor_inventory = {
             'skin': {'amount': 1, 'available': 0},
@@ -87,6 +89,11 @@ class Player(Entity):
         self.magic_index = 0
         self.magic = list(magic_data.keys())[self.magic_index]
 
+        # invisibility
+        self.invisible = False
+        self.invisibility_time = None
+        self.invisibility_duration = 5000
+
         # stats
         self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 5, 'stamina': 100}
         self.max_stats = {'health': 300, 'energy': 140, 'attack': 20, 'magic': 10, 'speed': 10, 'stamina': 300}
@@ -101,6 +108,18 @@ class Player(Entity):
         self.hurt_time = None
         self.invulnerability_duration = 500
 
+        # abilities
+
+        # dash
+        self.dashing = False
+        self.dash_time = None
+        self.dash_cooldown = 100
+        self.dash_flickering = False
+        self.dash_flicker_time = None
+        self.dash_flicker_cooldown = 400
+
+    # general
+
     def import_player_assets(self):
         character_path = f'graphics/player/{self.armor_type}/'
         self.animations = {'up': [], 'down': [], 'left': [], 'right': [],
@@ -114,6 +133,11 @@ class Player(Entity):
     def input(self):
         if not self.attacking:
             keys = pygame.key.get_pressed()
+
+            # abilities input
+            if keys[pygame.K_LCTRL]:
+                if 'dash' in class_data[self.class_type]['abilities'] and not self.dashing:
+                    self.start_dash_flickering_animation()
 
             # movement input
             if keys[pygame.K_w]:
@@ -208,6 +232,21 @@ class Player(Entity):
                 self.attacking = False
                 self.destroy_attack()
 
+        if self.dashing:
+            if current_time - self.dash_time >= self.dash_cooldown:
+                self.dashing = False
+                self.vulnerable = False
+
+        if self.dash_flickering:
+            if current_time - self.dash_flicker_time >= self.dash_flicker_cooldown:
+                self.dash_flickering = False
+                self.dash()
+
+        if self.invisible:
+            if current_time - self.invisibility_time >= self.invisibility_duration:
+                self.invisible = False
+                self.visible = True
+
         if not self.vulnerable:
             if current_time - self.hurt_time >= self.invulnerability_duration:
                 self.vulnerable = True
@@ -223,6 +262,8 @@ class Player(Entity):
         if not self.can_switch_armor:
             if current_time - self.armor_switch_time >= self.switch_duration_cooldown:
                 self.can_switch_armor = True
+
+    # animation logic
 
     def animate(self):
         animation = self.animations[self.status]
@@ -241,18 +282,37 @@ class Player(Entity):
             alpha = self.wave_value()
             self.image.set_alpha(alpha)
             self.image.set_alpha(alpha)
+        elif self.invisible:
+            self.image.set_alpha(50)
         else:
             self.image.set_alpha(255)
+
+    def dash_animate(self):
+        if self.dash_flickering:
+            alpha = self.wave_value()
+            self.image.set_alpha(alpha)
+            self.image.set_alpha(alpha)
+        else:
+            self.image.set_alpha(0)
+
+    # attack logic
 
     def get_full_weapon_damage(self):
         base_damage = self.stats['attack']
         weapon_damage = weapon_data[self.current_weapon]['damage']
-        return base_damage + weapon_damage
+
+        class_damage = 0
+        if weapon_data[self.current_weapon]['type'] in list(class_data[self.class_type]['multipliers'].keys()):
+            class_damage += int(weapon_data[self.current_weapon]['damage'] * class_data[self.class_type]['multipliers'][weapon_data[self.current_weapon]['type']])
+
+        return base_damage + weapon_damage + class_damage
 
     def get_full_magic_damage(self):
         base_damage = self.stats['magic']
         spell_damage = magic_data[self.magic]['strength']
         return base_damage + spell_damage
+
+    # movement
 
     def move_player(self, speed):
         if self.direction.magnitude() != 0:
@@ -303,6 +363,35 @@ class Player(Entity):
                     if self.direction.y < 0:  # moving up
                         self.hitbox.top = sprite.hitbox.bottom
 
+    def start_dash_flickering_animation(self):
+        if self.stamina - 20 > 0:
+            self.dash_flickering = True
+            self.vulnerable = False
+            self.hurt_time = pygame.time.get_ticks()
+            self.dash_flicker_time = pygame.time.get_ticks()
+            self.stamina -= 20
+
+    def dash(self):
+        dash_amount = 300
+        self.dashing = True
+
+        if 'left' in self.status:
+            self.hitbox.x -= dash_amount
+        elif 'right' in self.status:
+            self.hitbox.x += dash_amount
+        self.collision_player('horizontal')
+
+        if 'up' in self.status:
+            self.hitbox.y -= dash_amount
+        elif 'down' in self.status:
+            self.hitbox.y += dash_amount
+        self.collision_player('vertical')
+
+        self.rect.center = self.hitbox.center
+        self.dash_time = pygame.time.get_ticks()
+
+    # stats and recovery
+
     def stamina_recovery(self):
         if self.stamina < 0:
             self.stamina = 0
@@ -324,13 +413,25 @@ class Player(Entity):
             self.exp = self.exp - self.exp_to_level_up
             self.exp_to_level_up = int(1000 * (.5 * self.level))
 
+    # updating
+
     def update(self):
         if not self.can_switch_armor:
             self.import_player_assets()
-        self.input()
+
+        if not self.dashing and not self.dash_flickering:
+            self.input()
+
         self.cooldowns()
         self.get_status()
-        self.animate()
-        self.move_player(self.speed)
+
+        if not self.dashing and not self.dash_flickering:
+            self.animate()
+            self.move_player(self.speed)
+
+        if self.dash_flickering:
+            self.dash_animate()
+
         self.energy_recovery()
+
         # self.level_up()

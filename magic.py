@@ -7,6 +7,15 @@ class MagicPlayer:
     def __init__(self, animation_player):
         self.animation_player = animation_player
 
+    def invisibility(self, player, cost, groups):
+        if player.energy >= cost and not player.invisible:
+            player.visible = False
+            player.invisible = True
+            player.invisibility_time = pygame.time.get_ticks()
+            player.energy -= cost
+            player.image.set_alpha(200)
+            self.animation_player.create_particles('smoke', player.rect.center, groups)
+
     def heal(self, player, strength, cost, groups):
         if player.energy >= cost:
             # self.sounds['heal'].play()

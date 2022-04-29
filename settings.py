@@ -33,23 +33,25 @@ UI_BORDER_COLOR_ACTIVE = 'gold'
 
 # weapons
 weapon_data = {
-    'sword': {'cooldown': 0, 'damage': 15, 'graphic': 'graphics/weapons/sword/full.png'},
-    'lance': {'cooldown': 400, 'damage': 30, 'graphic': 'graphics/weapons/lance/full.png'},
-    'axe': {'cooldown': 300, 'damage': 20, 'graphic': 'graphics/weapons/axe/full.png'},
-    'rapier': {'cooldown': 50, 'damage': 8, 'graphic': 'graphics/weapons/rapier/full.png'},
-    'sai': {'cooldown': 80, 'damage': 10, 'graphic': 'graphics/weapons/sai/full.png'}
+    'sword': {'cooldown': 0, 'damage': 15, 'type': 'sword', 'graphic': 'graphics/weapons/sword/full.png'},
+    'lance': {'cooldown': 400, 'damage': 30, 'type': 'spear', 'graphic': 'graphics/weapons/lance/full.png'},
+    'axe': {'cooldown': 300, 'damage': 20, 'type': 'axe', 'graphic': 'graphics/weapons/axe/full.png'},
+    'rapier': {'cooldown': 50, 'damage': 8, 'type': 'sword', 'graphic': 'graphics/weapons/rapier/full.png'},
+    'sai': {'cooldown': 80, 'damage': 10, 'type': 'special', 'graphic': 'graphics/weapons/sai/full.png'}
 }
 
 # armor
 armor_data = {
-    'skin': {'defense': 0},
-    'steel': {'defense': 5}
+    'skin': {'defense': 0, 'type': 'none'},
+    'steel': {'defense': 5, 'type': 'heavy'}
 }
 
 # magic
 magic_data = {
     'flame': {'strength': 5, 'cost': 20, 'graphic': 'graphics/particles/flame/fire.png'},
-    'heal': {'strength': 20, 'cost': 10, 'graphic': 'graphics/particles/heal/heal.png'}}
+    'heal': {'strength': 20, 'cost': 10, 'graphic': 'graphics/particles/heal/heal.png'},
+    'invisibility': {'strength': 5, 'cost': 20, 'graphic': 'graphics/particles/heal/heal.png'}
+}
 
 # enemy
 monster_data = {
@@ -65,3 +67,11 @@ monster_data = {
     'bamboo': {'health': 70, 'exp': 120, 'damage': 6, 'attack_type': 'leaf_attack',
                'attack_sound': 'audio/attack/slash.wav', 'speed': 3, 'resistance': 3, 'attack_radius': 50,
                'notice_radius': 300}}
+
+# classes
+
+class_data = {
+    'None': {'multipliers': {}, 'abilities': []},
+    'knight': {'multipliers': {'sword': 0.5, 'spear': 0.3, 'heavy': 0.5}, 'abilities': ['defense_up']},
+    'rogue': {'multipliers': {'knife': 0.5, 'light': 0.3}, 'abilities': ['dash', 'invisibility']}
+}
