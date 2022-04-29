@@ -166,13 +166,20 @@ class Player(Entity):
             else:
                 self.direction.x = 0
 
+            # sprinting
             if keys[pygame.K_LSHIFT] and 'idle' not in self.status:
-                if self.speed < self.stats['speed'] + 5 and self.stamina > 0:
-                    self.speed += 5
+                armor_effect = 0
+                if armor_data[self.armor_type]['type'] == 'heavy':
+                    armor_effect = 2
+                else:
+                    armor_effect = 0
+
+                if self.speed < self.stats['speed'] + (5 - armor_effect) and self.stamina > 0:
+                    self.speed += (5 - armor_effect)
                 else:
                     self.speed = self.stats['speed']
 
-                self.stamina -= 0.5
+                self.stamina -= (0.5 + (armor_effect * 0.1))
             else:
                 self.speed = self.stats['speed']
                 self.stamina_recovery()
@@ -330,6 +337,9 @@ class Player(Entity):
     def move_player(self, speed):
         if self.direction.magnitude() != 0:
             self.direction = self.direction.normalize()
+        armor_effect = 0
+        if armor_data[self.armor_type]['type'] == 'heavy':
+            armor_effect = 1
 
         self.hitbox.x += self.direction.x * speed
         self.collision_player('horizontal')
