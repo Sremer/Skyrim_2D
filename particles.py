@@ -11,6 +11,7 @@ class AnimationPlayer:
             'flame': import_folder('graphics/particles/flame/frames'),
             'aura': import_folder('graphics/particles/aura'),
             'heal': import_folder('graphics/particles/heal/frames'),
+            'defense up': import_folder('graphics/particles/white_aura'),
 
             # attacks
             'claw': import_folder('graphics/particles/claw'),

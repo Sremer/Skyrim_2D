@@ -43,14 +43,16 @@ weapon_data = {
 # armor
 armor_data = {
     'skin': {'defense': 0, 'type': 'none'},
-    'steel': {'defense': 5, 'type': 'heavy'}
+    'steel': {'defense': 5, 'type': 'heavy'},
+    'thief': {'defense': 3, 'type': 'light'}
 }
 
 # magic
 magic_data = {
     'flame': {'strength': 5, 'cost': 20, 'graphic': 'graphics/particles/flame/fire.png'},
     'heal': {'strength': 20, 'cost': 10, 'graphic': 'graphics/particles/heal/heal.png'},
-    'invisibility': {'strength': 5, 'cost': 20, 'graphic': 'graphics/particles/heal/heal.png'}
+    'invisibility': {'strength': 5, 'cost': 20, 'graphic': 'graphics/particles/'},
+    'defense up': {'strength': 0.5, 'cost': 20, 'graphic': 'graphics/particles/'}
 }
 
 # enemy

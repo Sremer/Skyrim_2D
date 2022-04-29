@@ -111,6 +111,9 @@ class Level:
         if style == 'invisibility':
             self.magic_player.invisibility(self.player, cost, [self.visible_sprites])
 
+        if style == 'defense up':
+            self.magic_player.defense_up(self.player, strength, cost, [self.visible_sprites])
+
     def create_attack(self, hand):
         self.current_attack.append(Weapon(self.player, [self.visible_sprites, self.attack_sprites], hand))
 
@@ -142,9 +145,9 @@ class Level:
                 class_bonus += int(
                     armor_data[self.player.armor_type]['defense'] * class_data[self.player.class_type]['multipliers'][
                         armor_data[self.player.armor_type]['type']])
-            print(class_bonus)
 
-            self.player.health -= (amount - armor_data[self.player.armor_type]['defense'] - class_bonus)
+            self.player.health -= (amount - armor_data[self.player.armor_type]['defense']
+                                   - class_bonus - self.player.defense_up_bonus)
             self.player.vulnerable = False
             self.player.hurt_time = pygame.time.get_ticks()
             self.animation_player.create_particles(attack_type, self.player.rect.center, [self.visible_sprites])

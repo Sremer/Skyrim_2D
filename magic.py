@@ -7,6 +7,15 @@ class MagicPlayer:
     def __init__(self, animation_player):
         self.animation_player = animation_player
 
+    def defense_up(self, player, strength, cost, groups):
+        if player.energy >= cost and not player.defense_up:
+            player.defense_up = True
+            player.defense_up_time = pygame.time.get_ticks()
+            player.energy -= cost
+            player.defense_up_bonus = int((strength - player.stats['magic']) * armor_data[player.armor_type]['defense'])
+            print(player.defense_up_bonus)
+            self.animation_player.create_particles('defense up', player.rect.center, groups)
+
     def invisibility(self, player, cost, groups):
         if player.energy >= cost and not player.invisible:
             player.visible = False

@@ -31,7 +31,7 @@ class Player(Entity):
         self.money = 0
 
         # class
-        self.class_type = 'rogue'
+        self.class_type = 'knight'
 
         # movement
         self.attacking = False
@@ -52,11 +52,13 @@ class Player(Entity):
         self.magic_inventory = {
             'flame': 1,
             'heal': 1,
-            'invisibility': 1
+            'invisibility': 1,
+            'defense up': 1
         }
         self.armor_inventory = {
             'skin': {'amount': 1, 'available': 0},
-            'steel': {'amount': 1, 'available': 1}
+            'steel': {'amount': 1, 'available': 1},
+            'thief': {'amount': 1, 'available': 1}
         }
         self.misc_inventory = {}
         self.show_loot = show_loot
@@ -94,6 +96,12 @@ class Player(Entity):
         self.invisibility_time = None
         self.invisibility_duration = 5000
 
+        # defense up
+        self.defense_up = False
+        self.defense_up_time = None
+        self.defense_up_duration = 5000
+        self.defense_up_bonus = 0
+
         # stats
         self.stats = {'health': 100, 'energy': 60, 'attack': 10, 'magic': 4, 'speed': 5, 'stamina': 100}
         self.max_stats = {'health': 300, 'energy': 140, 'attack': 20, 'magic': 10, 'speed': 10, 'stamina': 300}
@@ -116,7 +124,7 @@ class Player(Entity):
         self.dash_cooldown = 100
         self.dash_flickering = False
         self.dash_flicker_time = None
-        self.dash_flicker_cooldown = 400
+        self.dash_flicker_cooldown = 300
 
     # general
 
@@ -235,7 +243,7 @@ class Player(Entity):
         if self.dashing:
             if current_time - self.dash_time >= self.dash_cooldown:
                 self.dashing = False
-                self.vulnerable = False
+                self.vulnerable = True
 
         if self.dash_flickering:
             if current_time - self.dash_flicker_time >= self.dash_flicker_cooldown:
@@ -246,6 +254,11 @@ class Player(Entity):
             if current_time - self.invisibility_time >= self.invisibility_duration:
                 self.invisible = False
                 self.visible = True
+
+        if self.defense_up:
+            if current_time - self.defense_up_time >= self.defense_up_duration:
+                self.defense_up_bonus = 0
+                self.defense_up = False
 
         if not self.vulnerable:
             if current_time - self.hurt_time >= self.invulnerability_duration:
