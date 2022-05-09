@@ -5,7 +5,7 @@ from entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, loot_sprites, create_attack, destroy_attack, create_magic, show_loot):
+    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, loot_sprites, create_attack, destroy_attack, create_magic, show_loot, create_smash):
         super().__init__(groups)
         self.image = pygame.image.load('graphics/test/player.png').convert_alpha()
         self.rect = self.image.get_rect(topleft=pos)
@@ -31,7 +31,7 @@ class Player(Entity):
         self.money = 0
 
         # class
-        self.class_type = 'knight'
+        self.class_type = 'None'
 
         # movement
         self.attacking = False
@@ -51,9 +51,7 @@ class Player(Entity):
         }
         self.magic_inventory = {
             'flame': 1,
-            'heal': 1,
-            'invisibility': 1,
-            'defense up': 1
+            'heal': 1
         }
         self.armor_inventory = {
             'skin': {'amount': 1, 'available': 0},
@@ -126,26 +124,37 @@ class Player(Entity):
         self.dash_flicker_time = None
         self.dash_flicker_cooldown = 300
 
+        # ground smash
+        self.ground_smashing = False
+        self.smash_time = None
+        self.smash_cooldown = 500
+        self.create_smash = create_smash
+        self.previous_attack_type = None
+
     # general
 
     def import_player_assets(self):
         character_path = f'graphics/player/{self.armor_type}/'
         self.animations = {'up': [], 'down': [], 'left': [], 'right': [],
                            'right_idle': [], 'left_idle': [], 'up_idle': [], 'down_idle': [],
-                           'right_attack': [], 'left_attack': [], 'up_attack': [], 'down_attack': []}
+                           'right_attack': [], 'left_attack': [], 'up_attack': [], 'down_attack': [],
+                           'smash': []}
 
         for animation in self.animations.keys():
             full_path = character_path + animation
             self.animations[animation] = import_folder(full_path)
 
     def input(self):
-        if not self.attacking:
+        if not self.attacking and not self.ground_smashing and not self.dashing:
             keys = pygame.key.get_pressed()
 
             # abilities input
             if keys[pygame.K_LCTRL]:
-                if 'dash' in class_data[self.class_type]['abilities'] and not self.dashing:
+                if 'dash' in class_data[self.class_type]['abilities']:
                     self.start_dash_flickering_animation()
+
+                elif 'ground smash' in class_data[self.class_type]['abilities']:
+                    self.ground_smash()
 
             # movement input
             if keys[pygame.K_w]:
@@ -224,10 +233,15 @@ class Player(Entity):
 
         # idle status
         if self.direction.x == 0 and self.direction.y == 0:
-            if not 'idle' in self.status and not 'attack' in self.status:
+            if not 'idle' in self.status and not 'attack' in self.status and not 'smash' in self.status:
                 self.status = self.status + '_idle'
 
-        if self.attacking:
+        if self.ground_smashing:
+            self.direction.x = 0
+            self.direction.y = 0
+            self.status = 'smash'
+
+        elif self.attacking:
             self.direction.x = 0
             self.direction.y = 0
             if not 'attack' in self.status:
@@ -238,6 +252,8 @@ class Player(Entity):
         else:
             if 'attack' in self.status:
                 self.status = self.status.replace('_attack', '')
+            elif 'smash' in self.status:
+                self.status = 'down'
 
     def cooldowns(self):
         current_time = pygame.time.get_ticks()
@@ -251,6 +267,11 @@ class Player(Entity):
             if current_time - self.dash_time >= self.dash_cooldown:
                 self.dashing = False
                 self.vulnerable = True
+
+        if self.ground_smashing:
+            if current_time - self.smash_time >= self.smash_cooldown:
+                self.attack_type = self.previous_attack_type
+                self.ground_smashing = False
 
         if self.dash_flickering:
             if current_time - self.dash_flicker_time >= self.dash_flicker_cooldown:
@@ -394,6 +415,8 @@ class Player(Entity):
             self.dash_flicker_time = pygame.time.get_ticks()
             self.stamina -= 20
 
+    # abilities
+
     def dash(self):
         dash_amount = 300
         self.dashing = True
@@ -412,6 +435,16 @@ class Player(Entity):
 
         self.rect.center = self.hitbox.center
         self.dash_time = pygame.time.get_ticks()
+
+    def ground_smash(self):
+        if self.stamina >= 20:
+            self.stamina -= 20
+            self.ground_smashing = True
+            self.previous_attack_type = self.attack_type
+            self.attack_type = 'smash'
+
+            self.smash_time = pygame.time.get_ticks()
+            self.create_smash()
 
     # stats and recovery
 

@@ -13,6 +13,9 @@ class AnimationPlayer:
             'heal': import_folder('graphics/particles/heal/frames'),
             'defense up': import_folder('graphics/particles/white_aura'),
 
+            # abilities
+            'ground smash': import_folder('graphics/particles/orange_circle'),
+
             # attacks
             'claw': import_folder('graphics/particles/claw'),
             'slash': import_folder('graphics/particles/slash'),
@@ -53,17 +56,17 @@ class AnimationPlayer:
 
     def create_grass_particles(self, pos, groups):
         animation_frames = choice(self.frames['leaf'])
-        ParticleEffect(pos, animation_frames, groups)
+        ParticleEffect(pos, animation_frames, groups, 'leaf')
 
-    def create_particles(self, animation_type, pos, groups):
+    def create_particles(self, animation_type, pos, groups, sprite_type='magic'):
         animation_frames = self.frames[animation_type]
-        ParticleEffect(pos, animation_frames, groups)
+        ParticleEffect(pos, animation_frames, groups, sprite_type)
 
 
 class ParticleEffect(pygame.sprite.Sprite):
-    def __init__(self, pos, animation_frames, groups):
+    def __init__(self, pos, animation_frames, groups, sprite_type):
         super().__init__(groups)
-        self.sprite_type = 'magic'
+        self.sprite_type = sprite_type
         self.frame_index = 0
         self.animation_speed = 0.15
         self.frames = animation_frames

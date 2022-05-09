@@ -85,7 +85,8 @@ class Level:
                                     self.create_attack,
                                     self.destroy_attack,
                                     self.create_magic,
-                                    self.show_loot)
+                                    self.show_loot,
+                                    self.create_smash)
                             else:
                                 monster_name = 'squid'
                                 Enemy(
@@ -122,6 +123,9 @@ class Level:
             for attack in self.current_attack:
                 attack.kill()
         self.current_attack = []
+
+    def create_smash(self):
+        self.magic_player.ground_smash(self.player, [self.visible_sprites, self.attack_sprites])
 
     def player_attack_logic(self):
         if self.attack_sprites:

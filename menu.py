@@ -159,13 +159,14 @@ class Menu:
                 armor_list.append(armor)
 
         self.menus = {
-            'General': {'attribute_nr': 3, 'attribute_names': ['Magic', 'Items', 'Quit']},
+            'General': {'attribute_nr': 4, 'attribute_names': ['Magic', 'Items', 'Classes', 'Quit Game']},
             'Items': {'attribute_nr': 3, 'attribute_names': ['Weapons', 'Armor', 'Back']},
             'Magic': {'attribute_nr': len(player.magic_inventory.keys()) + 1, 'attribute_names': list(player.magic_inventory.keys()) + ['Back']},
             'Weapons': {'attribute_nr': len(weapon_list) + 1, 'attribute_names': weapon_list + ['Back']},
             'Armor': {'attribute_nr': len(armor_list) + 1, 'attribute_names': armor_list + ['Back']},
             'Hand Choice': {'attribute_nr': 2, 'attribute_names': ['Main-Hand', 'Off-Hand']},
-            'Level Up': {'attribute_nr': 3, 'attribute_names': ['Health', 'magic', 'Stamina']}
+            'Level Up': {'attribute_nr': 3, 'attribute_names': ['Health', 'magic', 'Stamina']},
+            'Classes': {'attribute_nr': len(class_data.keys()) + 1, 'attribute_names': list(class_data.keys()) + ['Back']}
         }
 
     def display(self):
@@ -213,14 +214,25 @@ class Item:
         surface.blit(title_surf, title_rect)
 
     def trigger(self, player, saved_item_type, saved_item_name):
-        if self.name == 'Quit':
+        if self.name == 'Quit Game':
             pygame.quit()
 
         elif self.name == 'Back':
             return 'General', None
 
-        if self.item_type == 'General' or self.item_type == 'Items':
+        elif self.item_type == 'General' or self.item_type == 'Items':
             return self.name, None
+
+        elif self.item_type == 'Classes':
+            for magic in class_data[player.class_type]['magic']:
+                player.magic_inventory.pop(magic)
+
+            player.class_type = self.name
+
+            for magic in class_data[player.class_type]['magic']:
+                player.magic_inventory[magic] = 1
+
+            return 'General', None
 
         elif self.item_type == 'Level Up':
             print(self.item_type)
