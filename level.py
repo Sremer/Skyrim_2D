@@ -12,6 +12,7 @@ from menu import Menu
 from magic import MagicPlayer
 from Loot import Loot
 from loot_menu import LootMenu
+from projectile import Projectile
 
 
 class Level:
@@ -35,6 +36,7 @@ class Level:
         self.current_attack = []
         self.attack_sprites = pygame.sprite.Group()
         self.attackable_sprites = pygame.sprite.Group()
+        self.projectiles_to_remove = []
 
         # sprite setup
         self.create_map()
@@ -86,7 +88,9 @@ class Level:
                                     self.destroy_attack,
                                     self.create_magic,
                                     self.show_loot,
-                                    self.create_smash)
+                                    self.create_smash,
+                                    self.create_bow,
+                                    self.create_arrow)
                             else:
                                 monster_name = 'squid'
                                 Enemy(
@@ -123,6 +127,12 @@ class Level:
             for attack in self.current_attack:
                 attack.kill()
         self.current_attack = []
+
+    def create_bow(self):
+        self.current_attack.append(Weapon(self.player, [self.visible_sprites], 'bow'))
+
+    def create_arrow(self):
+        Projectile(self.player, [self.visible_sprites, self.attack_sprites], 'arrow', self.obstacle_sprites, self.attackable_sprites, self.projectiles_to_remove)
 
     def create_smash(self):
         self.magic_player.ground_smash(self.player, [self.visible_sprites, self.attack_sprites])
@@ -178,6 +188,11 @@ class Level:
         self.loot_paused = True
         self.current_loot_sprite = loot_sprite
 
+    def remove_projectiles(self):
+        if self.projectiles_to_remove:
+            for projectile in self.projectiles_to_remove:
+                projectile.kill()
+
     def run(self):
         # update and draw the game
         self.visible_sprites.custom_draw(self.player)
@@ -196,6 +211,7 @@ class Level:
             self.visible_sprites.update()
             self.visible_sprites.enemy_update(self.player)
             self.player_attack_logic()
+            self.remove_projectiles()
 
             # set the menu back
             self.menu.menu_type = 'General'

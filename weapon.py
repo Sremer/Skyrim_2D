@@ -7,7 +7,9 @@ class Weapon(pygame.sprite.Sprite):
         self.sprite_type = 'weapon'
         direction = player.status.split('_')[0]
         weapon = None
-        if hand == 'Main-Hand':
+        if hand == 'bow':
+            weapon = 'bow'
+        elif hand == 'Main-Hand':
             weapon = player.weapon
         else:
             weapon = player.offhand_weapon

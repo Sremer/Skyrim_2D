@@ -5,7 +5,9 @@ from entity import Entity
 
 
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, loot_sprites, create_attack, destroy_attack, create_magic, show_loot, create_smash):
+    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, loot_sprites,
+                 create_attack, destroy_attack, create_magic, show_loot, create_smash,
+                 create_bow, create_arrow):
         super().__init__(groups)
         self.image = pygame.image.load('graphics/test/player.png').convert_alpha()
         self.rect = self.image.get_rect(topleft=pos)
@@ -47,7 +49,8 @@ class Player(Entity):
             'sword': {'amount': 1, 'available': 0},
             'axe': {'amount': 1, 'available': 1},
             'rapier': {'amount': 1, 'available': 1},
-            'sai': {'amount': 1, 'available': 1}
+            'sai': {'amount': 1, 'available': 1},
+            'bow': {'amount': 1, 'available': 1}
         }
         self.magic_inventory = {
             'flame': 1,
@@ -83,6 +86,14 @@ class Player(Entity):
         self.can_switch_weapon = True
         self.weapon_switch_time = None
         self.switch_duration_cooldown = 200
+
+        # bows
+        self.bow_drawn = False
+        self.create_bow = create_bow
+        self.create_arrow = create_arrow
+        self.arrow_shot = False
+        self.shot_time = None
+        self.shot_cooldown = 500
 
         # magic
         self.create_magic = create_magic
@@ -145,86 +156,106 @@ class Player(Entity):
             self.animations[animation] = import_folder(full_path)
 
     def input(self):
-        if not self.attacking and not self.ground_smashing and not self.dashing:
+        if not self.attacking and not self.ground_smashing and not self.dashing and not self.dash_flickering:
             keys = pygame.key.get_pressed()
 
-            # abilities input
-            if keys[pygame.K_LCTRL]:
-                if 'dash' in class_data[self.class_type]['abilities']:
-                    self.start_dash_flickering_animation()
+            if not self.bow_drawn:
 
-                elif 'ground smash' in class_data[self.class_type]['abilities']:
-                    self.ground_smash()
+                # abilities input
+                if keys[pygame.K_LCTRL]:
+                    if 'dash' in class_data[self.class_type]['abilities']:
+                        self.start_dash_flickering_animation()
 
-            # movement input
-            if keys[pygame.K_w]:
-                self.direction.y = -1
-                self.status = 'up'
-            elif keys[pygame.K_s]:
-                self.direction.y = 1
-                self.status = 'down'
-            else:
-                self.direction.y = 0
+                    elif 'ground smash' in class_data[self.class_type]['abilities']:
+                        self.ground_smash()
 
-            if keys[pygame.K_d]:
-                self.direction.x = 1
-                self.status = 'right'
-            elif keys[pygame.K_a]:
-                self.direction.x = -1
-                self.status = 'left'
-            else:
-                self.direction.x = 0
-
-            # sprinting
-            if keys[pygame.K_LSHIFT] and 'idle' not in self.status:
-                armor_effect = 0
-                if armor_data[self.armor_type]['type'] == 'heavy':
-                    armor_effect = 2
+                # movement input
+                if keys[pygame.K_w]:
+                    self.direction.y = -1
+                    self.status = 'up'
+                elif keys[pygame.K_s]:
+                    self.direction.y = 1
+                    self.status = 'down'
                 else:
-                    armor_effect = 0
+                    self.direction.y = 0
 
-                if self.speed < self.stats['speed'] + (5 - armor_effect) and self.stamina > 0:
-                    self.speed += (5 - armor_effect)
+                if keys[pygame.K_d]:
+                    self.direction.x = 1
+                    self.status = 'right'
+                elif keys[pygame.K_a]:
+                    self.direction.x = -1
+                    self.status = 'left'
+                else:
+                    self.direction.x = 0
+
+                # sprinting
+                if keys[pygame.K_LSHIFT] and 'idle' not in self.status:
+                    armor_effect = 0
+                    if armor_data[self.armor_type]['type'] == 'heavy':
+                        armor_effect = 2
+                    else:
+                        armor_effect = 0
+
+                    if self.speed < self.stats['speed'] + (5 - armor_effect) and self.stamina > 0:
+                        self.speed += (5 - armor_effect)
+                    else:
+                        self.speed = self.stats['speed']
+
+                    self.stamina -= (0.5 + (armor_effect * 0.1))
                 else:
                     self.speed = self.stats['speed']
+                    self.stamina_recovery()
 
-                self.stamina -= (0.5 + (armor_effect * 0.1))
+            # bow input
+            if self.attack_type == 'bow':
+                if keys[pygame.K_LALT]:
+                    self.bow_drawn = True
+                    self.create_bow()
+                else:
+                    self.bow_drawn = False
+                    self.destroy_attack()
+
+                if keys[pygame.K_LALT] and keys[pygame.K_SPACE]:
+                    if not self.arrow_shot:
+                        self.create_arrow()
+                        self.arrow_shot = True
+                        self.shot_time = pygame.time.get_ticks()
+
             else:
-                self.speed = self.stats['speed']
-                self.stamina_recovery()
+                # normal attack input
 
-            # magic input
-            if keys[pygame.K_LALT]:
-                if self.offhand_attack_type == 'weapon':
-                    self.attacking = True
-                    self.attack_time = pygame.time.get_ticks()
-                    self.create_attack('Off-Hand')
-                    self.current_weapon = self.offhand_weapon
-                elif self.offhand_attack_type == 'magic':
-                    self.attacking = True
-                    self.attack_time = pygame.time.get_ticks()
-                    style = self.offhand_magic
-                    strength = magic_data[self.offhand_magic]['strength'] + self.stats['magic']
-                    cost = magic_data[self.offhand_magic]['cost']
-                    self.create_magic(style, strength, cost)
-                else:
-                    self.attacking = True
-                    self.attack_time = pygame.time.get_ticks()
+                # off-hand input
+                if keys[pygame.K_LALT]:
+                    if self.offhand_attack_type == 'weapon':
+                        self.attacking = True
+                        self.attack_time = pygame.time.get_ticks()
+                        self.create_attack('Off-Hand')
+                        self.current_weapon = self.offhand_weapon
+                    elif self.offhand_attack_type == 'magic':
+                        self.attacking = True
+                        self.attack_time = pygame.time.get_ticks()
+                        style = self.offhand_magic
+                        strength = magic_data[self.offhand_magic]['strength'] + self.stats['magic']
+                        cost = magic_data[self.offhand_magic]['cost']
+                        self.create_magic(style, strength, cost)
+                    else:
+                        self.attacking = True
+                        self.attack_time = pygame.time.get_ticks()
 
-            # attack input
-            if keys[pygame.K_SPACE]:
-                if self.attack_type == 'weapon':
-                    self.attacking = True
-                    self.attack_time = pygame.time.get_ticks()
-                    self.create_attack('Main-Hand')
-                    self.current_weapon = self.weapon
-                else:
-                    self.attacking = True
-                    self.attack_time = pygame.time.get_ticks()
-                    style = self.magic
-                    strength = magic_data[self.magic]['strength'] + self.stats['magic']
-                    cost = magic_data[self.magic]['cost']
-                    self.create_magic(style, strength, cost)
+                # main-hand input
+                if keys[pygame.K_SPACE]:
+                    if self.attack_type == 'weapon':
+                        self.attacking = True
+                        self.attack_time = pygame.time.get_ticks()
+                        self.create_attack('Main-Hand')
+                        self.current_weapon = self.weapon
+                    else:
+                        self.attacking = True
+                        self.attack_time = pygame.time.get_ticks()
+                        style = self.magic
+                        strength = magic_data[self.magic]['strength'] + self.stats['magic']
+                        cost = magic_data[self.magic]['cost']
+                        self.create_magic(style, strength, cost)
 
             if keys[pygame.K_r]:
                 self.exp += 100
@@ -241,7 +272,11 @@ class Player(Entity):
             self.direction.y = 0
             self.status = 'smash'
 
-        elif self.attacking:
+        elif self.dashing or self.dash_flickering:
+            self.direction.x = 0
+            self.direction.y = 0
+
+        elif self.attacking or self.bow_drawn:
             self.direction.x = 0
             self.direction.y = 0
             if not 'attack' in self.status:
@@ -262,6 +297,10 @@ class Player(Entity):
             if current_time - self.attack_time >= self.attack_cooldown + weapon_data[self.current_weapon]['cooldown']:
                 self.attacking = False
                 self.destroy_attack()
+
+        if self.arrow_shot:
+            if current_time - self.shot_time >= self.shot_cooldown:
+                self.arrow_shot = False
 
         if self.dashing:
             if current_time - self.dash_time >= self.dash_cooldown:
@@ -353,6 +392,9 @@ class Player(Entity):
         spell_damage = magic_data[self.magic]['strength']
         return base_damage + spell_damage
 
+    def get_full_bow_damage(self):
+        return weapon_data[self.weapon]['damage'] + 10
+
     # movement
 
     def move_player(self, speed):
@@ -437,8 +479,8 @@ class Player(Entity):
         self.dash_time = pygame.time.get_ticks()
 
     def ground_smash(self):
-        if self.stamina >= 20:
-            self.stamina -= 20
+        if self.stamina >= 80:
+            self.stamina -= 80
             self.ground_smashing = True
             self.previous_attack_type = self.attack_type
             self.attack_type = 'smash'
@@ -475,15 +517,11 @@ class Player(Entity):
         if not self.can_switch_armor:
             self.import_player_assets()
 
-        if not self.dashing and not self.dash_flickering:
-            self.input()
-
+        self.input()
         self.cooldowns()
         self.get_status()
-
-        if not self.dashing and not self.dash_flickering:
-            self.animate()
-            self.move_player(self.speed)
+        self.animate()
+        self.move_player(self.speed)
 
         if self.dash_flickering:
             self.dash_animate()

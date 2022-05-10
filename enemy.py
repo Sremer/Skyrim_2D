@@ -5,7 +5,8 @@ from support import *
 
 
 class Enemy(Entity):
-    def __init__(self, monster_name, pos, groups, obstacle_sprites, damage_player, trigger_death_particles, add_exp, create_loot):
+    def __init__(self, monster_name, pos, groups, obstacle_sprites, damage_player,
+                 trigger_death_particles, add_exp, create_loot):
 
         # general setup
         super().__init__(groups)
@@ -21,6 +22,11 @@ class Enemy(Entity):
         self.rect = self.image.get_rect(topleft=pos)
         self.hitbox = self.rect.inflate(0, -10)
         self.obstacle_sprites = obstacle_sprites
+
+        # stun
+        self.stunned = False
+        self.stun_time = None
+        self.stun_cooldown = 1200
 
         # stats
         self.monster_name = monster_name
@@ -127,6 +133,10 @@ class Enemy(Entity):
             if current_time - self.hit_time >= self.invincibility_duration:
                 self.vulnerable = True
 
+        if self.stunned:
+            if current_time - self.stun_time >= self.stun_cooldown:
+                self.stunned = False
+
     def get_damage(self, player, attack_type):
         if self.vulnerable:
             self.direction = self.get_player_distance_direction(player)[1]
@@ -134,11 +144,16 @@ class Enemy(Entity):
                 self.health -= player.get_full_weapon_damage()
             elif attack_type == 'magic':
                 self.health -= player.get_full_magic_damage()
+            elif attack_type == 'arrow':
+                self.health -= player.get_full_bow_damage()
             else:
                 self.health -= 10
-                print(self.health)
             self.hit_time = pygame.time.get_ticks()
             self.vulnerable = False
+
+            if attack_type == 'smash':
+                self.stunned = True
+                self.stun_time = pygame.time.get_ticks()
 
     def check_death(self):
         if self.health <= 0:
@@ -199,6 +214,7 @@ class Enemy(Entity):
         self.check_death()
 
     def enemy_update(self, player):
-        self.move_enemy(self.speed, player)
-        self.get_status(player)
-        self.actions(player)
+        if not self.stunned:
+            self.move_enemy(self.speed, player)
+            self.get_status(player)
+            self.actions(player)

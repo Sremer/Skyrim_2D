@@ -263,6 +263,14 @@ class Item:
 
             return 'General', None
 
+        elif self.name == 'bow':
+            player.attack_type = 'bow'
+            player.offhand_attack_type = 'bow'
+            player.weapon = self.name
+            player.offhand_weapon = self.name
+
+            return 'General', None
+
         elif self.item_type == 'Hand Choice':
             if self.name == 'Main-Hand':
                 if saved_item_type == 'Weapons':
@@ -289,6 +297,7 @@ class Item:
                     player.offhand_magic = saved_item_name
 
             return 'General', None
+
         else:
             return 'Hand Choice', self.name
 

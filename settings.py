@@ -37,7 +37,8 @@ weapon_data = {
     'lance': {'cooldown': 400, 'damage': 30, 'type': 'spear', 'graphic': 'graphics/weapons/lance/full.png'},
     'axe': {'cooldown': 300, 'damage': 20, 'type': 'axe', 'graphic': 'graphics/weapons/axe/full.png'},
     'rapier': {'cooldown': 50, 'damage': 8, 'type': 'sword', 'graphic': 'graphics/weapons/rapier/full.png'},
-    'sai': {'cooldown': 80, 'damage': 10, 'type': 'special', 'graphic': 'graphics/weapons/sai/full.png'}
+    'sai': {'cooldown': 80, 'damage': 10, 'type': 'special', 'graphic': 'graphics/weapons/sai/full.png'},
+    'bow': {'cooldown': 80, 'damage': 10, 'type': 'bow', 'graphic': 'graphics/weapons/bow/down.png'}
 }
 
 # armor
