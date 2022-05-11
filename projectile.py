@@ -2,12 +2,12 @@ import pygame
 
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, player, groups, sprite_type, obstacle_sprites, attackable_sprites, projectiles_to_remove):
+    def __init__(self, player, groups, sprite_type, obstacle_sprites, attackable_sprites, projectiles_to_remove, range):
         super().__init__(groups)
         self.sprite_type = sprite_type
         self.direction = player.status.split('_')[0]
         self.distance = 0
-        self.range = 600
+        self.range = int(range * 10)
 
         # sprite groups
         self.obstacle_sprites = obstacle_sprites

@@ -21,6 +21,8 @@ class Level:
         # get the display surface
         self.display_surface = pygame.display.get_surface()
         self.game_paused = False
+        self.vertical_change = 1
+        self.horizontal_change = 1
 
         # loot system
         self.loot_paused = False
@@ -90,7 +92,8 @@ class Level:
                                     self.show_loot,
                                     self.create_smash,
                                     self.create_bow,
-                                    self.create_arrow)
+                                    self.create_arrow,
+                                    self.change_camera)
                             else:
                                 monster_name = 'squid'
                                 Enemy(
@@ -131,8 +134,8 @@ class Level:
     def create_bow(self):
         self.current_attack.append(Weapon(self.player, [self.visible_sprites], 'bow'))
 
-    def create_arrow(self):
-        Projectile(self.player, [self.visible_sprites, self.attack_sprites], 'arrow', self.obstacle_sprites, self.attackable_sprites, self.projectiles_to_remove)
+    def create_arrow(self, range):
+        Projectile(self.player, [self.visible_sprites, self.attack_sprites], 'arrow', self.obstacle_sprites, self.attackable_sprites, self.projectiles_to_remove, range)
 
     def create_smash(self):
         self.magic_player.ground_smash(self.player, [self.visible_sprites, self.attack_sprites])
@@ -193,9 +196,45 @@ class Level:
             for projectile in self.projectiles_to_remove:
                 projectile.kill()
 
+    def change_camera(self, direction):
+        rate = 0.025
+
+        if direction:
+            if direction == 'up':
+                self.vertical_change += rate
+                if self.vertical_change >= 2:
+                    self.vertical_change = 2
+            elif direction == 'down':
+                self.vertical_change -= rate
+                if self.vertical_change <= 0:
+                    self.vertical_change = 0
+            elif direction == 'right':
+                self.horizontal_change -= rate
+                if self.horizontal_change <= 0:
+                    self.horizontal_change = 0
+            else:
+                self.horizontal_change += rate
+                if self.horizontal_change >= 2:
+                    self.horizontal_change = 2
+
+        else:
+            if self.vertical_change < (1 - rate):
+                self.vertical_change += rate
+            elif self.vertical_change > (1 + rate):
+                self.vertical_change -= rate
+            else:
+                self.vertical_change = 1
+
+            if self.horizontal_change < (1 - rate):
+                self.horizontal_change += rate
+            elif self.horizontal_change > (1 + rate):
+                self.horizontal_change -= rate
+            else:
+                self.horizontal_change = 1
+
     def run(self):
         # update and draw the game
-        self.visible_sprites.custom_draw(self.player)
+        self.visible_sprites.custom_draw(self.player, self.vertical_change, self.horizontal_change)
         self.ui.display(self.player)
         self.level_up()
 
@@ -232,10 +271,11 @@ class YSortCameraGroup(pygame.sprite.Group):
         self.floor_surf = pygame.image.load('graphics/test_area.png').convert()
         self.floor_rect = self.floor_surf.get_rect(topleft=(0, 0))
 
-    def custom_draw(self, player):
+    def custom_draw(self, player, vertical_change, horizontal_change):
         # getting the offset
-        self.offset.x = player.rect.centerx - self.half_width
-        self.offset.y = player.rect.centery - self.half_height
+        self.offset.x = player.rect.centerx - (self.half_width * horizontal_change)
+        self.offset.y = player.rect.centery - (self.half_height * vertical_change)
+
 
         # drawing the floor
         floor_offset_pos = self.floor_rect.topleft - self.offset

@@ -213,6 +213,38 @@ class Item:
         # draw
         surface.blit(title_surf, title_rect)
 
+    def switch(self, player, saved_item_type, saved_item_name):
+        if self.name == 'Main-Hand':
+            if saved_item_type == 'Weapons':
+                player.attack_type = 'weapon'
+                if player.weapon:
+                    player.weapon_inventory[player.weapon]['available'] += 1
+                    if weapon_data[player.weapon]['type'] == 'bow':
+                        player.offhand_weapon = None
+                        player.offhand_attack_type = 'fist'
+                player.weapon = saved_item_name
+                player.weapon_inventory[player.weapon]['available'] -= 1
+            elif saved_item_type == 'Magic':
+                if player.attack_type == 'weapon':
+                    player.weapon_inventory[player.weapon]['available'] += 1
+                player.attack_type = 'magic'
+                player.magic = saved_item_name
+        else:
+            if saved_item_type == 'Weapons':
+                player.offhand_attack_type = 'weapon'
+                if player.offhand_weapon:
+                    player.weapon_inventory[player.offhand_weapon]['available'] += 1
+                    if weapon_data[player.offhand_weapon]['type'] == 'bow':
+                        player.weapon = None
+                        player.attack_type = 'fist'
+                player.offhand_weapon = saved_item_name
+                player.weapon_inventory[player.offhand_weapon]['available'] -= 1
+            elif saved_item_type == 'Magic':
+                if player.offhand_attack_type == 'weapon':
+                    player.weapon_inventory[player.offhand_weapon]['available'] += 1
+                player.offhand_attack_type = 'magic'
+                player.offhand_magic = saved_item_name
+
     def trigger(self, player, saved_item_type, saved_item_name):
         if self.name == 'Quit Game':
             pygame.quit()
@@ -264,37 +296,21 @@ class Item:
             return 'General', None
 
         elif self.name == 'bow':
+            if player.weapon:
+                player.weapon_inventory[player.weapon]['available'] += 1
+            if player.offhand_weapon:
+                player.weapon_inventory[player.offhand_weapon]['available'] += 1
+
             player.attack_type = 'bow'
             player.offhand_attack_type = 'bow'
             player.weapon = self.name
             player.offhand_weapon = self.name
+            player.weapon_inventory[player.weapon]['available'] -= 1
 
             return 'General', None
 
         elif self.item_type == 'Hand Choice':
-            if self.name == 'Main-Hand':
-                if saved_item_type == 'Weapons':
-                    player.attack_type = 'weapon'
-                    player.weapon_inventory[player.weapon]['available'] += 1
-                    player.weapon = saved_item_name
-                    player.weapon_inventory[player.weapon]['available'] -= 1
-                elif saved_item_type == 'Magic':
-                    if player.attack_type == 'weapon':
-                        player.weapon_inventory[player.weapon]['available'] += 1
-                    player.attack_type = 'magic'
-                    player.magic = saved_item_name
-            else:
-                if saved_item_type == 'Weapons':
-                    player.offhand_attack_type = 'weapon'
-                    if player.offhand_weapon:
-                        player.weapon_inventory[player.offhand_weapon]['available'] += 1
-                    player.offhand_weapon = saved_item_name
-                    player.weapon_inventory[player.offhand_weapon]['available'] -= 1
-                elif saved_item_type == 'Magic':
-                    if player.offhand_attack_type == 'weapon':
-                        player.weapon_inventory[player.offhand_weapon]['available'] += 1
-                    player.offhand_attack_type = 'magic'
-                    player.offhand_magic = saved_item_name
+            self.switch(player, saved_item_type, saved_item_name)
 
             return 'General', None
 
