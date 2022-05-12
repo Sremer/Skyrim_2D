@@ -76,5 +76,6 @@ monster_data = {
 class_data = {
     'None': {'multipliers': {}, 'abilities': [], 'magic': []},
     'knight': {'multipliers': {'sword': 0.5, 'spear': 0.3, 'heavy': 0.5}, 'abilities': ['ground smash'], 'magic': ['defense up']},
-    'rogue': {'multipliers': {'knife': 0.5, 'light': 0.3}, 'abilities': ['dash'], 'magic': ['invisibility']}
+    'rogue': {'multipliers': {'knife': 0.5, 'light': 0.3}, 'abilities': ['dash'], 'magic': ['invisibility']},
+    'archer': {'multipliers': {'bow': 0.5, 'light': 0.3}, 'abilities': ['long shot'], 'magic': ['']}
 }

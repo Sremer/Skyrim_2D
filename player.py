@@ -7,7 +7,7 @@ from entity import Entity
 class Player(Entity):
     def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, loot_sprites,
                  create_attack, destroy_attack, create_magic, show_loot, create_smash,
-                 create_bow, create_arrow, change_camera):
+                 create_bow, create_arrow, change_camera, create_target, kill_target, target_sprite):
         super().__init__(groups)
         self.image = pygame.image.load('graphics/test/player.png').convert_alpha()
         self.rect = self.image.get_rect(topleft=pos)
@@ -148,6 +148,11 @@ class Player(Entity):
 
         # long shot
         self.change_camera = change_camera
+        self.long_shot_active = False
+        self.long_shot_key_pressed = False
+        self.create_target = create_target
+        self.kill_target = kill_target
+        self.target_sprite = target_sprite
 
     # general
 
@@ -166,13 +171,10 @@ class Player(Entity):
         if not self.attacking and not self.ground_smashing and not self.dashing and not self.dash_flickering:
             keys = pygame.key.get_pressed()
 
-            if keys[pygame.K_t]:
-                direction = self.status.split('_')[0]
-                self.change_camera(direction)
-            else:
-                self.change_camera(None)
-
             if not self.bow_drawn:
+                self.change_camera(None)
+                self.long_shot_active = False
+                self.kill_target()
 
                 # abilities input
                 if keys[pygame.K_LCTRL]:
@@ -219,29 +221,53 @@ class Player(Entity):
                     self.speed = self.stats['speed']
                     self.stamina_recovery()
 
+            else:
+                # long shot ability
+                if 'long shot' in class_data[self.class_type]['abilities']:
+                    if keys[pygame.K_LCTRL]:
+                        self.long_shot_active = True
+                        self.long_shot()
+                        self.create_target()
+
             # bow input
             if self.attack_type == 'bow' and self.offhand_attack_type == 'bow':
-                if self.arrow_ready and not keys[pygame.K_SPACE]:
-                    if not self.arrow_shot:
-                        self.create_arrow(self.draw_power)
-                        self.arrow_shot = True
-                        self.shot_time = pygame.time.get_ticks()
+                if not self.long_shot_active:
+                    if self.arrow_ready and not keys[pygame.K_SPACE]:
+                        if not self.arrow_shot:
+                            self.create_arrow(self.draw_power)
+                            self.arrow_shot = True
+                            self.shot_time = pygame.time.get_ticks()
 
-                    self.arrow_ready = False
-                    self.draw_power = 1
+                        self.arrow_ready = False
+                        self.draw_power = 1
 
-                if keys[pygame.K_LALT]:
-                    self.bow_drawn = True
-                    self.create_bow()
+                    if keys[pygame.K_LALT]:
+                        self.bow_drawn = True
+                        self.create_bow()
+                    else:
+                        self.bow_drawn = False
+                        self.destroy_attack()
+
+                    if keys[pygame.K_LALT] and keys[pygame.K_SPACE]:
+                        self.arrow_ready = True
+                        self.draw_power += self.draw_rate
+                        if self.draw_power >= self.max_draw:
+                            self.draw_power = self.max_draw
+
                 else:
-                    self.bow_drawn = False
-                    self.destroy_attack()
+                    if keys[pygame.K_LALT]:
+                        self.bow_drawn = True
+                        self.create_bow()
+                    else:
+                        self.bow_drawn = False
+                        self.destroy_attack()
 
-                if keys[pygame.K_LALT] and keys[pygame.K_SPACE]:
-                    self.arrow_ready = True
-                    self.draw_power += self.draw_rate
-                    if self.draw_power >= self.max_draw:
-                        self.draw_power = self.max_draw
+                    if keys[pygame.K_LALT] and keys[pygame.K_SPACE]:
+                        if not self.arrow_shot and self.stamina >= 50:
+                            self.stamina -= 50
+                            self.arrow_shot = True
+                            self.shot_time = pygame.time.get_ticks()
+                            self.create_arrow(None, 'long shot')
 
             else:
                 # normal attack input
@@ -417,8 +443,11 @@ class Player(Entity):
         spell_damage = magic_data[self.magic]['strength']
         return base_damage + spell_damage
 
-    def get_full_bow_damage(self):
-        return weapon_data[self.weapon]['damage'] + 10
+    def get_full_bow_damage(self, arrow_type):
+        if arrow_type == 'arrow':
+            return weapon_data[self.weapon]['damage'] + 10
+        else:
+            return (weapon_data[self.weapon]['damage'] + 10) * 2
 
     # movement
 
@@ -512,6 +541,10 @@ class Player(Entity):
 
             self.smash_time = pygame.time.get_ticks()
             self.create_smash()
+
+    def long_shot(self):
+        direction = self.status.split('_')[0]
+        self.change_camera(direction)
 
     # stats and recovery
 

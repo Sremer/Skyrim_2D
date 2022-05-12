@@ -50,8 +50,16 @@ class Menu:
                 self.selection_index += 1
                 self.can_move = False
                 self.selection_time = pygame.time.get_ticks()
+            elif keys[pygame.K_d] and self.selection_index == attribute_nr - 1:
+                self.selection_index = 0
+                self.can_move = False
+                self.selection_time = pygame.time.get_ticks()
             elif keys[pygame.K_a] and self.selection_index >= 1:
                 self.selection_index -= 1
+                self.can_move = False
+                self.selection_time = pygame.time.get_ticks()
+            elif keys[pygame.K_a] and self.selection_index == 0:
+                self.selection_index = attribute_nr - 1
                 self.can_move = False
                 self.selection_time = pygame.time.get_ticks()
             elif keys[pygame.K_w] and self.selection_index - self.num_items_in_row >= 0:

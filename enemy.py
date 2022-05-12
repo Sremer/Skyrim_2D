@@ -144,8 +144,8 @@ class Enemy(Entity):
                 self.health -= player.get_full_weapon_damage()
             elif attack_type == 'magic':
                 self.health -= player.get_full_magic_damage()
-            elif attack_type == 'arrow':
-                self.health -= player.get_full_bow_damage()
+            elif attack_type == 'arrow' or attack_type == 'long shot arrow':
+                self.health -= player.get_full_bow_damage(attack_type)
             else:
                 self.health -= 10
             self.hit_time = pygame.time.get_ticks()

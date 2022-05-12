@@ -12,7 +12,7 @@ from menu import Menu
 from magic import MagicPlayer
 from Loot import Loot
 from loot_menu import LootMenu
-from projectile import Projectile
+from projectile import Projectile, Target, LongShotArrow
 
 
 class Level:
@@ -38,7 +38,10 @@ class Level:
         self.current_attack = []
         self.attack_sprites = pygame.sprite.Group()
         self.attackable_sprites = pygame.sprite.Group()
+
+        # projectile sprites
         self.projectiles_to_remove = []
+        self.target_sprite = pygame.sprite.Group()
 
         # sprite setup
         self.create_map()
@@ -93,7 +96,10 @@ class Level:
                                     self.create_smash,
                                     self.create_bow,
                                     self.create_arrow,
-                                    self.change_camera)
+                                    self.change_camera,
+                                    self.create_target,
+                                    self.kill_target,
+                                    self.target_sprite)
                             else:
                                 monster_name = 'squid'
                                 Enemy(
@@ -134,8 +140,12 @@ class Level:
     def create_bow(self):
         self.current_attack.append(Weapon(self.player, [self.visible_sprites], 'bow'))
 
-    def create_arrow(self, range):
-        Projectile(self.player, [self.visible_sprites, self.attack_sprites], 'arrow', self.obstacle_sprites, self.attackable_sprites, self.projectiles_to_remove, range)
+    def create_arrow(self, range, type='arrow'):
+        if type == 'arrow':
+            Projectile(self.player, [self.visible_sprites, self.attack_sprites], type, self.obstacle_sprites, self.attackable_sprites, self.projectiles_to_remove, range)
+        elif type == 'long shot':
+            LongShotArrow(self.player, [self.visible_sprites, self.attack_sprites], self.obstacle_sprites,
+                          self.attackable_sprites, self.target_sprite, self.projectiles_to_remove, self.vertical_change, self.horizontal_change)
 
     def create_smash(self):
         self.magic_player.ground_smash(self.player, [self.visible_sprites, self.attack_sprites])
@@ -232,9 +242,19 @@ class Level:
             else:
                 self.horizontal_change = 1
 
+    def create_target(self):
+        if not self.target_sprite:
+            Target([self.target_sprite])
+
+    def kill_target(self):
+        if self.target_sprite:
+            for sprite in self.target_sprite:
+                sprite.kill()
+
     def run(self):
         # update and draw the game
         self.visible_sprites.custom_draw(self.player, self.vertical_change, self.horizontal_change)
+        self.target_sprite.draw(self.display_surface)
         self.ui.display(self.player)
         self.level_up()
 
@@ -249,6 +269,7 @@ class Level:
         else:
             self.visible_sprites.update()
             self.visible_sprites.enemy_update(self.player)
+            self.target_sprite.update()
             self.player_attack_logic()
             self.remove_projectiles()
 
@@ -275,7 +296,6 @@ class YSortCameraGroup(pygame.sprite.Group):
         # getting the offset
         self.offset.x = player.rect.centerx - (self.half_width * horizontal_change)
         self.offset.y = player.rect.centery - (self.half_height * vertical_change)
-
 
         # drawing the floor
         floor_offset_pos = self.floor_rect.topleft - self.offset
