@@ -79,3 +79,9 @@ class_data = {
     'rogue': {'multipliers': {'knife': 0.5, 'light': 0.3}, 'abilities': ['dash'], 'magic': ['invisibility']},
     'archer': {'multipliers': {'bow': 0.5, 'light': 0.3}, 'abilities': ['long shot'], 'magic': ['']}
 }
+
+# NPC
+
+npc_data = {
+    'villager': {'talk': ['Nice Day!']}
+}

@@ -13,6 +13,7 @@ from magic import MagicPlayer
 from Loot import Loot
 from loot_menu import LootMenu
 from projectile import Projectile, Target, LongShotArrow
+from npc import NPC, SpeechBox
 
 
 class Level:
@@ -24,6 +25,9 @@ class Level:
         self.vertical_change = 1
         self.horizontal_change = 1
 
+        # NPC-Player interactions
+        self.talking_paused = False
+
         # loot system
         self.loot_paused = False
         self.loot_menu = None
@@ -33,6 +37,8 @@ class Level:
         self.obstacle_sprites = pygame.sprite.Group()
         self.loot_sprites = pygame.sprite.Group()
         self.current_loot_sprite = None
+        self.npc_sprites = pygame.sprite.Group()
+        self.speech_box_sprites = pygame.sprite.Group()
 
         # attack sprites
         self.current_attack = []
@@ -99,7 +105,12 @@ class Level:
                                     self.change_camera,
                                     self.create_target,
                                     self.kill_target,
-                                    self.target_sprite)
+                                    self.target_sprite,
+                                    self.npc_sprites,
+                                    self.create_speech)
+                            elif col == '2':
+                                NPC((x, y), [self.visible_sprites, self.npc_sprites], 'villager', 'npc', self.obstacle_sprites)
+
                             else:
                                 monster_name = 'squid'
                                 Enemy(
@@ -251,6 +262,10 @@ class Level:
             for sprite in self.target_sprite:
                 sprite.kill()
 
+    def create_speech(self, words):
+        SpeechBox([self.speech_box_sprites], 'speech', words)
+        self.talking_paused = True
+
     def run(self):
         # update and draw the game
         self.visible_sprites.custom_draw(self.player, self.vertical_change, self.horizontal_change)
@@ -266,9 +281,23 @@ class Level:
             if not self.loot_paused:
                 self.current_loot_sprite.kill()
 
+        elif self.talking_paused:
+            update = True
+            for sprite in self.speech_box_sprites:
+                update = sprite.update()
+
+            if not update:
+                for sprite in self.speech_box_sprites:
+                    sprite.kill()
+                self.talking_paused = False
+                self.player.talking = False
+                self.player.can_talk = False
+                self.player.can_talk_time = pygame.time.get_ticks()
+
         else:
             self.visible_sprites.update()
             self.visible_sprites.enemy_update(self.player)
+            self.visible_sprites.npc_update(self.player)
             self.target_sprite.update()
             self.player_attack_logic()
             self.remove_projectiles()
@@ -311,3 +340,9 @@ class YSortCameraGroup(pygame.sprite.Group):
                          hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'enemy']
         for enemy in enemy_sprites:
             enemy.enemy_update(player)
+
+    def npc_update(self, player):
+        npc_sprites = [sprite for sprite in self.sprites() if
+                         hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'npc']
+        for npc in npc_sprites:
+            npc.npc_update(player)

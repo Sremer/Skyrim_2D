@@ -2,18 +2,29 @@ import pygame
 from settings import *
 from support import import_folder
 from entity import Entity
+from random import choice
 
 
 class Player(Entity):
     def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, loot_sprites,
                  create_attack, destroy_attack, create_magic, show_loot, create_smash,
-                 create_bow, create_arrow, change_camera, create_target, kill_target, target_sprite):
+                 create_bow, create_arrow, change_camera, create_target, kill_target, target_sprite,
+                 npc_sprites, create_speech):
         super().__init__(groups)
         self.image = pygame.image.load('graphics/test/player.png').convert_alpha()
         self.rect = self.image.get_rect(topleft=pos)
         self.hitbox = self.rect.inflate(-6, HITBOX_OFFSET['player'])
         self.sprite_type = 'player'
         self.visible = True
+
+        # npc interactions
+        self.npc_sprites = npc_sprites
+        self.create_speech = create_speech
+        self.talk = False
+        self.talking = False
+        self.can_talk = True
+        self.can_talk_time = None
+        self.can_talk_cooldown = 300
 
         # armor
         self.armor_type = 'skin'
@@ -95,7 +106,7 @@ class Player(Entity):
         self.shot_time = None
         self.shot_cooldown = 200
         self.arrow_ready = False
-        self.draw_rate = 1
+        self.draw_rate = 1.5
         self.draw_power = 1
         self.max_draw = 60
 
@@ -290,9 +301,16 @@ class Player(Entity):
                         self.attacking = True
                         self.attack_time = pygame.time.get_ticks()
 
-                # main-hand input
+                # main-hand input and NPC interaction
                 if keys[pygame.K_SPACE]:
-                    if self.attack_type == 'weapon':
+                    if self.talk and self.can_talk:
+                        for npc in self.npc_sprites:
+                            if npc.talk and not self.talking:
+                                speech = choice(npc_data[npc.name]['talk'])
+                                self.create_speech(speech)
+                                self.talking = True
+
+                    elif self.attack_type == 'weapon':
                         self.attacking = True
                         self.attack_time = pygame.time.get_ticks()
                         self.create_attack('Main-Hand')
@@ -348,6 +366,10 @@ class Player(Entity):
             if current_time - self.attack_time >= self.attack_cooldown + weapon_data[self.current_weapon]['cooldown']:
                 self.attacking = False
                 self.destroy_attack()
+
+        if not self.can_talk:
+            if current_time - self.can_talk_time >= self.can_talk_cooldown:
+                self.can_talk = True
 
         if self.arrow_shot:
             if current_time - self.shot_time >= self.shot_cooldown:
@@ -484,6 +506,13 @@ class Player(Entity):
                     if self.direction.x < 0:  # moving left
                         self.hitbox.left = sprite.hitbox.right
 
+            for sprite in self.npc_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.x > 0:  # moving right
+                        self.hitbox.right = sprite.hitbox.left
+                    if self.direction.x < 0:  # moving left
+                        self.hitbox.left = sprite.hitbox.right
+
         if direction == 'vertical':
             for sprite in self.loot_sprites:
                 if sprite.hitbox.colliderect(self.hitbox):
@@ -497,6 +526,13 @@ class Player(Entity):
                         self.hitbox.top = sprite.hitbox.bottom
 
             for sprite in self.attackable_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.y > 0:  # moving down
+                        self.hitbox.bottom = sprite.hitbox.top
+                    if self.direction.y < 0:  # moving up
+                        self.hitbox.top = sprite.hitbox.bottom
+
+            for sprite in self.npc_sprites:
                 if sprite.hitbox.colliderect(self.hitbox):
                     if self.direction.y > 0:  # moving down
                         self.hitbox.bottom = sprite.hitbox.top
