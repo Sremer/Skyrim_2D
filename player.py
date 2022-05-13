@@ -307,7 +307,7 @@ class Player(Entity):
                         for npc in self.npc_sprites:
                             if npc.talk and not self.talking:
                                 speech = choice(npc_data[npc.name]['talk'])
-                                self.create_speech(speech)
+                                self.create_speech(speech, npc.name)
                                 self.talking = True
 
                     elif self.attack_type == 'weapon':

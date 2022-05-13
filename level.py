@@ -262,8 +262,8 @@ class Level:
             for sprite in self.target_sprite:
                 sprite.kill()
 
-    def create_speech(self, words):
-        SpeechBox([self.speech_box_sprites], 'speech', words)
+    def create_speech(self, words, name):
+        SpeechBox([self.speech_box_sprites], 'speech', words, name)
         self.talking_paused = True
 
     def run(self):

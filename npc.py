@@ -168,12 +168,15 @@ class NPC(Entity):
 
 
 class SpeechBox(pygame.sprite.Sprite):
-    def __init__(self, groups, sprite_type, words):
+    def __init__(self, groups, sprite_type, words, name):
         super().__init__(groups)
         self.display_surface = pygame.display.get_surface()
+        self.name = name
         self.font = pygame.font.Font(UI_FONT, UI_FONT_SIZE)
         self.sprite_type = sprite_type
-        self.words = words
+        self.words = list(words)
+        self.curr_word = ''
+        self.counter = 0
         self.height = self.display_surface.get_size()[1] * 0.3
         self.width = self.display_surface.get_size()[0] * 0.8
 
@@ -182,7 +185,8 @@ class SpeechBox(pygame.sprite.Sprite):
         self.time = pygame.time.get_ticks()
         self.cooldown_time = 300
 
-        self.pos = (WIDTH // 10 + 100, HEIGTH // 2 + 150)
+        self.pos = (WIDTH // 10 + 30, HEIGTH // 2 + 170)
+        self.name_pos = (WIDTH // 10 + 30, HEIGTH // 2 + 135)
         self.speech_box = pygame.Rect(WIDTH // 10, HEIGTH // 2 + 100, self.width, self.height)
 
     def input(self):
@@ -200,15 +204,24 @@ class SpeechBox(pygame.sprite.Sprite):
             if current_time - self.time >= self.cooldown_time:
                 self.can_kill = True
 
+    def create_letter(self):
+        if self.counter < len(self.words):
+            self.curr_word += self.words[self.counter]
+            self.counter += 1
+
     def create(self):
-        text_surf = self.font.render(self.words, False, TEXT_COLOR)
-        text_rect = text_surf.get_rect(center=self.pos)
+        text_surf = self.font.render(self.curr_word, False, TEXT_COLOR)
+        text_rect = text_surf.get_rect(topleft=self.pos)
+        name_surf = self.font.render(f'{self.name}:', False, TEXT_COLOR)
+        name_rect = name_surf.get_rect(topleft=self.name_pos)
 
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, self.speech_box)
+        self.display_surface.blit(name_surf, name_rect)
         self.display_surface.blit(text_surf, text_rect)
         pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, self.speech_box, 3)
 
     def update(self):
+        self.create_letter()
         self.create()
         self.cooldown()
         return self.input()

@@ -83,5 +83,5 @@ class_data = {
 # NPC
 
 npc_data = {
-    'villager': {'talk': ['Nice Day!']}
+    'villager': {'talk': ['Nice Day!', 'I have a very important request...that squid over there has stolen all of my lunch money. Would you get it back for me?']}
 }
