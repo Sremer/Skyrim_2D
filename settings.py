@@ -83,5 +83,6 @@ class_data = {
 # NPC
 
 npc_data = {
-    'villager': {'talk': ['Nice Day!', 'I have a very important request...that squid over there has stolen all of my lunch money. Would you get it back for me?']}
+    'villager': {'talk': ['Nice Day!', 'I have a very important request...that squid over there has stolen all of my lunch money. Would you get it back for me?',
+                          'Here let me tell you my story... I was 3 when I first realized that I wanted to bake. Baking became my passion; my obsession. I would stay up for long days and nights creating the most beautiful cakes...then one day I said nah.']}
 }

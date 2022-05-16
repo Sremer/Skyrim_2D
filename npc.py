@@ -175,8 +175,14 @@ class SpeechBox(pygame.sprite.Sprite):
         self.font = pygame.font.Font(UI_FONT, UI_FONT_SIZE)
         self.sprite_type = sprite_type
         self.words = list(words)
-        self.curr_word = ''
+        self.curr_word = []
         self.counter = 0
+        self.line_count = 60
+        self.max_line_count = 60
+        self.curr_line = -1
+        self.actual_curr_line = -1
+        self.finished = False
+        self.keep_going = True
         self.height = self.display_surface.get_size()[1] * 0.3
         self.width = self.display_surface.get_size()[0] * 0.8
 
@@ -192,8 +198,14 @@ class SpeechBox(pygame.sprite.Sprite):
     def input(self):
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_SPACE] and self.can_kill:
+        if keys[pygame.K_SPACE] and self.can_kill and self.finished:
             return False
+        elif keys[pygame.K_SPACE] and not self.keep_going:
+            self.curr_line = -1
+            self.curr_word.clear()
+            self.keep_going = True
+
+            return True
         else:
             return True
 
@@ -205,20 +217,50 @@ class SpeechBox(pygame.sprite.Sprite):
                 self.can_kill = True
 
     def create_letter(self):
-        if self.counter < len(self.words):
-            self.curr_word += self.words[self.counter]
-            self.counter += 1
+        if self.curr_line == 2 and self.counter % self.line_count == 0:
+            self.keep_going = False
+
+        if self.keep_going:
+            if self.counter < len(self.words):
+                if self.counter % self.line_count == 0:
+                    self.curr_word.append('')
+                    self.curr_line += 1
+                    self.actual_curr_line += 1
+                    self.line_count = self.find_space(self.max_line_count * (self.actual_curr_line + 1))
+                    if self.words[self.counter] == ' ':
+                        del self.words[self.counter]
+
+                self.curr_word[self.curr_line] += self.words[self.counter]
+                self.counter += 1
+
+    def find_space(self, start):
+        if len(self.words) >= start:
+            if self.words[start] == ' ':
+                return start
+            else:
+                return self.find_space(start - 1)
+        else:
+            return self.max_line_count * (self.actual_curr_line + 1)
 
     def create(self):
-        text_surf = self.font.render(self.curr_word, False, TEXT_COLOR)
-        text_rect = text_surf.get_rect(topleft=self.pos)
+        line_counter = 0
         name_surf = self.font.render(f'{self.name}:', False, TEXT_COLOR)
         name_rect = name_surf.get_rect(topleft=self.name_pos)
 
         pygame.draw.rect(self.display_surface, UI_BG_COLOR, self.speech_box)
         self.display_surface.blit(name_surf, name_rect)
-        self.display_surface.blit(text_surf, text_rect)
         pygame.draw.rect(self.display_surface, UI_BORDER_COLOR, self.speech_box, 3)
+
+        for line in self.curr_word:
+            x, y = self.pos
+            y += (line_counter * 30)
+            text_surf = self.font.render(line, False, TEXT_COLOR)
+            text_rect = text_surf.get_rect(topleft=(x, y))
+
+            self.display_surface.blit(text_surf, text_rect)
+            line_counter += 1
+
+        self.finished = (self.counter == len(self.words))
 
     def update(self):
         self.create_letter()
