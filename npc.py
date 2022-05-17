@@ -21,6 +21,9 @@ class NPC(Entity):
         self.change_time = pygame.time.get_ticks()
         self.change_cooldown = 500
 
+        # quest
+        self.quests = npc_data[self.name]['quests']
+
         # movement
         self.origin = pygame.math.Vector2(pos)
         self.max_distance = 200

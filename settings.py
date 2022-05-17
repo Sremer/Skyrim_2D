@@ -83,6 +83,18 @@ class_data = {
 # NPC
 
 npc_data = {
-    'villager': {'talk': ['Nice Day!', 'I have a very important request...that squid over there has stolen all of my lunch money. Would you get it back for me?',
-                          'Here let me tell you my story... I was 3 when I first realized that I wanted to bake. Baking became my passion; my obsession. I would stay up for long days and nights creating the most beautiful cakes...then one day I said nah.']}
+    'villager': {'talk': ['Nice Day!', 'Here let me tell you my story... I was 3 when I first realized that I wanted to bake. Baking became my passion; my obsession. I would stay up for long days and nights creating the most beautiful cakes...then one day I said nah.'],
+                 'quests': ['lunch money']}
+}
+
+# Quests
+
+quest_data = {
+    'lunch money': {'start': 'I have a very important request...that squid over there has stolen all of my lunch money. Would you get it back for me?',
+                    'required': ['kill_squid_1'],
+                    'during': 'I am just so hungry',
+                    'finish': 'Thank you! Now I wont go hungry',
+                    'started': False,
+                    'completed': False}
+
 }

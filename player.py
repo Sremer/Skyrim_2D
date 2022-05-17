@@ -240,8 +240,16 @@ class Player(Entity):
                         self.long_shot()
                         self.create_target()
 
+            # NPC interaction
+            if keys[pygame.K_SPACE] and self.talk and self.can_talk:
+                for npc in self.npc_sprites:
+                    if npc.talk and not self.talking:
+                        speech = choice(npc_data[npc.name]['talk'])
+                        self.create_speech(speech, npc.name)
+                        self.talking = True
+
             # bow input
-            if self.attack_type == 'bow' and self.offhand_attack_type == 'bow':
+            elif self.attack_type == 'bow' and self.offhand_attack_type == 'bow':
                 if not self.long_shot_active:
                     if self.arrow_ready and not keys[pygame.K_SPACE]:
                         if not self.arrow_shot:
@@ -301,16 +309,9 @@ class Player(Entity):
                         self.attacking = True
                         self.attack_time = pygame.time.get_ticks()
 
-                # main-hand input and NPC interaction
+                # main-hand input
                 if keys[pygame.K_SPACE]:
-                    if self.talk and self.can_talk:
-                        for npc in self.npc_sprites:
-                            if npc.talk and not self.talking:
-                                speech = choice(npc_data[npc.name]['talk'])
-                                self.create_speech(speech, npc.name)
-                                self.talking = True
-
-                    elif self.attack_type == 'weapon':
+                    if self.attack_type == 'weapon':
                         self.attacking = True
                         self.attack_time = pygame.time.get_ticks()
                         self.create_attack('Main-Hand')
