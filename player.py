@@ -178,11 +178,28 @@ class Player(Entity):
             full_path = character_path + animation
             self.animations[animation] = import_folder(full_path)
 
+    def not_doing_something(self):
+        return not self.attacking \
+               and not self.ground_smashing \
+               and not self.dashing \
+               and not self.dash_flickering
+
     def input(self):
-        if not self.attacking and not self.ground_smashing and not self.dashing and not self.dash_flickering:
+        if self.not_doing_something():
             keys = pygame.key.get_pressed()
 
-            if not self.bow_drawn:
+            # abilities and movement
+
+            if self.bow_drawn:
+
+                # long shot ability
+                if 'long shot' in class_data[self.class_type]['abilities']:
+                    if keys[pygame.K_LCTRL]:
+                        self.long_shot_active = True
+                        self.long_shot()
+                        self.create_target()
+
+            else:
                 self.change_camera(None)
                 self.long_shot_active = False
                 self.kill_target()
@@ -216,7 +233,6 @@ class Player(Entity):
 
                 # sprinting
                 if keys[pygame.K_LSHIFT] and 'idle' not in self.status:
-                    armor_effect = 0
                     if armor_data[self.armor_type]['type'] == 'heavy':
                         armor_effect = 2
                     else:
@@ -232,13 +248,7 @@ class Player(Entity):
                     self.speed = self.stats['speed']
                     self.stamina_recovery()
 
-            else:
-                # long shot ability
-                if 'long shot' in class_data[self.class_type]['abilities']:
-                    if keys[pygame.K_LCTRL]:
-                        self.long_shot_active = True
-                        self.long_shot()
-                        self.create_target()
+            # space bar logic
 
             # NPC interaction
             if keys[pygame.K_SPACE] and self.talk and self.can_talk:
@@ -248,9 +258,24 @@ class Player(Entity):
                         self.create_speech(speech, npc.name)
                         self.talking = True
 
-            # bow input
+            # bow logic
             elif self.attack_type == 'bow' and self.offhand_attack_type == 'bow':
-                if not self.long_shot_active:
+                if self.long_shot_active:
+                    if keys[pygame.K_LALT]:
+                        self.bow_drawn = True
+                        self.create_bow()
+                    else:
+                        self.bow_drawn = False
+                        self.destroy_attack()
+
+                    if keys[pygame.K_LALT] and keys[pygame.K_SPACE]:
+                        if not self.arrow_shot and self.stamina >= 50:
+                            self.stamina -= 50
+                            self.arrow_shot = True
+                            self.shot_time = pygame.time.get_ticks()
+                            self.create_arrow(None, 'long shot')
+
+                else:
                     if self.arrow_ready and not keys[pygame.K_SPACE]:
                         if not self.arrow_shot:
                             self.create_arrow(self.draw_power)
@@ -272,21 +297,6 @@ class Player(Entity):
                         self.draw_power += self.draw_rate
                         if self.draw_power >= self.max_draw:
                             self.draw_power = self.max_draw
-
-                else:
-                    if keys[pygame.K_LALT]:
-                        self.bow_drawn = True
-                        self.create_bow()
-                    else:
-                        self.bow_drawn = False
-                        self.destroy_attack()
-
-                    if keys[pygame.K_LALT] and keys[pygame.K_SPACE]:
-                        if not self.arrow_shot and self.stamina >= 50:
-                            self.stamina -= 50
-                            self.arrow_shot = True
-                            self.shot_time = pygame.time.get_ticks()
-                            self.create_arrow(None, 'long shot')
 
             else:
                 # normal attack input
@@ -326,6 +336,8 @@ class Player(Entity):
                     else:
                         self.attacking = True
                         self.attack_time = pygame.time.get_ticks()
+
+            # testing
 
             if keys[pygame.K_r]:
                 self.exp += 100

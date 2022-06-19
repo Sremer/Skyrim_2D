@@ -91,9 +91,10 @@ npc_data = {
 
 quest_data = {
     'lunch money': {'start': 'I have a very important request...that squid over there has stolen all of my lunch money. Would you get it back for me?',
-                    'required': ['kill_squid_1'],
+                    'reqs': ['kill_squid_1'],
                     'during': 'I am just so hungry',
                     'finish': 'Thank you! Now I wont go hungry',
+                    'available': True,
                     'started': False,
                     'completed': False}
 
