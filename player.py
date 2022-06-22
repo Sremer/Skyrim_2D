@@ -72,6 +72,7 @@ class Player(Entity):
             'steel': {'amount': 1, 'available': 1},
             'thief': {'amount': 1, 'available': 1}
         }
+        self.quest_inventory = {}
         self.misc_inventory = {}
         self.show_loot = show_loot
 
@@ -255,7 +256,7 @@ class Player(Entity):
                 for npc in self.npc_sprites:
                     if npc.talk and not self.talking:
                         speech = choice(npc_data[npc.name]['talk'])
-                        self.create_speech(speech, npc.name)
+                        self.create_speech(npc.name)
                         self.talking = True
 
             # bow logic
@@ -443,13 +444,15 @@ class Player(Entity):
         self.image = animation[int(self.frame_index)]
         self.rect = self.image.get_rect(center=self.hitbox.center)
 
-        # flicker
+        # player visibility
         if not self.vulnerable:
             alpha = self.wave_value()
             self.image.set_alpha(alpha)
             self.image.set_alpha(alpha)
+
         elif self.invisible:
             self.image.set_alpha(50)
+
         else:
             self.image.set_alpha(255)
 

@@ -89,13 +89,12 @@ npc_data = {
 
 # Quests
 
-quest_data = {
-    'lunch money': {'start': 'I have a very important request...that squid over there has stolen all of my lunch money. Would you get it back for me?',
-                    'reqs': ['kill_squid_1'],
-                    'during': 'I am just so hungry',
-                    'finish': 'Thank you! Now I wont go hungry',
-                    'available': True,
-                    'started': False,
-                    'completed': False}
-
+quest_master_database = {
+    'missing lunchbox': {
+        'dialogue': {
+            'start': 'That squid over there has took my lunchbox! Please get it back for me?',
+            'during': 'I\'m just so hungry...',
+            'finish': 'Thank you! Now I can enjoy my lunch!'
+        }
+    }
 }

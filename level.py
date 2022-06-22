@@ -60,6 +60,9 @@ class Level:
         self.animation_player = AnimationPlayer()
         self.magic_player = MagicPlayer(self.animation_player)
 
+        # quests
+        self.active_quests = ''
+
     def create_map(self):
         layout = {
             'grass': import_csv_layout('map/test_area_grass.csv'),
@@ -262,8 +265,9 @@ class Level:
             for sprite in self.target_sprite:
                 sprite.kill()
 
-    def create_speech(self, words, name):
-        SpeechBox([self.speech_box_sprites], 'speech', words, name)
+    def create_speech(self, name):
+        speech = choice(npc_data[name]['talk'])
+        SpeechBox([self.speech_box_sprites], 'speech', speech, name)
         self.talking_paused = True
 
     def run(self):
@@ -343,6 +347,6 @@ class YSortCameraGroup(pygame.sprite.Group):
 
     def npc_update(self, player):
         npc_sprites = [sprite for sprite in self.sprites() if
-                         hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'npc']
+                       hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'npc']
         for npc in npc_sprites:
             npc.npc_update(player)

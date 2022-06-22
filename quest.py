@@ -1,6 +1,11 @@
 import pygame
 from settings import *
 
+quest_database = {
+
+
+}
+
 
 class Quest:
     def __init__(self, name, can_start=False):
