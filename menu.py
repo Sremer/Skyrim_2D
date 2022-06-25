@@ -155,7 +155,7 @@ class Menu:
             item = Item(left, top, self.width, self.height, index, self.font, names[index], self.menu_type, num_items)
             self.item_list.append(item)
 
-    def reload_menu_items(self, player):
+    def reload_menu_items(self, player, active_quests):
         weapon_list = []
         for weapon in list(player.weapon_inventory.keys()):
             if player.weapon_inventory[weapon]['available'] >= 1:
@@ -166,19 +166,26 @@ class Menu:
             if player.armor_inventory[armor]['available'] >= 1:
                 armor_list.append(armor)
 
+        quest_items_list = []
+        for quest_item in list(player.quest_inventory.keys()):
+            if player.quest_inventory[quest_item]['available'] >= 1:
+                quest_items_list.append(quest_item)
+
         self.menus = {
-            'General': {'attribute_nr': 4, 'attribute_names': ['Magic', 'Items', 'Classes', 'Quit Game']},
-            'Items': {'attribute_nr': 3, 'attribute_names': ['Weapons', 'Armor', 'Back']},
+            'General': {'attribute_nr': 5, 'attribute_names': ['Magic', 'Items', 'Classes', 'Quests', 'Quit Game']},
+            'Items': {'attribute_nr': 4, 'attribute_names': ['Weapons', 'Armor', 'Quest Items', 'Back']},
             'Magic': {'attribute_nr': len(player.magic_inventory.keys()) + 1, 'attribute_names': list(player.magic_inventory.keys()) + ['Back']},
             'Weapons': {'attribute_nr': len(weapon_list) + 1, 'attribute_names': weapon_list + ['Back']},
             'Armor': {'attribute_nr': len(armor_list) + 1, 'attribute_names': armor_list + ['Back']},
+            'Quest Items': {'attribute_nr': len(quest_items_list) + 1, 'attribute_names': quest_items_list + ['Back']},
             'Hand Choice': {'attribute_nr': 2, 'attribute_names': ['Main-Hand', 'Off-Hand']},
             'Level Up': {'attribute_nr': 3, 'attribute_names': ['Health', 'magic', 'Stamina']},
-            'Classes': {'attribute_nr': len(class_data.keys()) + 1, 'attribute_names': list(class_data.keys()) + ['Back']}
+            'Classes': {'attribute_nr': len(class_data.keys()) + 1, 'attribute_names': list(class_data.keys()) + ['Back']},
+            'Quests': {'attribute_nr': len(active_quests) + 1, 'attribute_names': active_quests + ['Back']}
         }
 
-    def display(self):
-        self.reload_menu_items(self.player)
+    def display(self, active_quests):
+        self.reload_menu_items(self.player, active_quests)
         if self.nr_level_ups:
             self.menu_type = 'Level Up'
         if not self.item_list:
@@ -262,6 +269,12 @@ class Item:
 
         elif self.item_type == 'General' or self.item_type == 'Items':
             return self.name, None
+
+        elif self.item_type == 'Quests':
+            return self.item_type, None
+
+        elif self.item_type == 'Quest Items':
+            return self.item_type, None
 
         elif self.item_type == 'Classes':
             for magic in class_data[player.class_type]['magic']:

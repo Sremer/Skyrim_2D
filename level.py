@@ -14,6 +14,7 @@ from Loot import Loot
 from loot_menu import LootMenu
 from projectile import Projectile, Target, LongShotArrow
 from npc import NPC, SpeechBox
+from quest import Quest
 
 
 class Level:
@@ -61,7 +62,9 @@ class Level:
         self.magic_player = MagicPlayer(self.animation_player)
 
         # quests
-        self.active_quests = ''
+        self.quest_database = {}
+        self.active_quests = []
+        self.create_quest_database()
 
     def create_map(self):
         layout = {
@@ -128,6 +131,22 @@ class Level:
 
         # create loot menu
         self.loot_menu = LootMenu(self.player)
+
+    def create_quest_database(self):
+        for quest in quest_master_database:
+            self.quest_database[quest] = {
+                'active': False,
+                'finished': False,
+                'locked': bool(quest_master_database[quest]['prereq']),
+                'type': quest_master_database[quest]['objective']['type'],
+                'what': quest_master_database[quest]['objective']['what']
+            }
+
+        print(self.quest_database)
+
+    def start_quest(self, quest_name):
+        self.quest_database[quest_name]['active'] = True
+        self.active_quests.append(quest_name)
 
     def create_magic(self, style, strength, cost):
         if style == 'heal':
@@ -265,8 +284,26 @@ class Level:
             for sprite in self.target_sprite:
                 sprite.kill()
 
+    def is_there_unlocked_quest(self, npc_name):
+        for quest in npc_data[npc_name]['quests']:
+            if not self.quest_database[quest]['locked']:
+                return quest
+
+        return None
+
     def create_speech(self, name):
-        speech = choice(npc_data[name]['talk'])
+        quest = self.is_there_unlocked_quest(name)
+
+        if quest:
+            if self.quest_database[quest]['active']:
+                speech = quest_master_database[quest]['dialogue']['during']
+            else:
+                speech = quest_master_database[quest]['dialogue']['start']
+                self.start_quest(quest)
+
+        else:
+            speech = choice(npc_data[name]['talk'])
+
         SpeechBox([self.speech_box_sprites], 'speech', speech, name)
         self.talking_paused = True
 
@@ -278,7 +315,7 @@ class Level:
         self.level_up()
 
         if self.game_paused:
-            self.menu.display()
+            self.menu.display(self.active_quests)
 
         elif self.loot_paused:
             self.loot_paused = self.loot_menu.display(self.current_loot_sprite)

@@ -195,6 +195,14 @@ class Item:
                 else:
                     player.magic_inventory[self.name] = 1
 
+        elif self.item_type == 'quest':
+            for i in range(self.num_items):
+                if self.name in list(player.quest_inventory.keys()):
+                    player.quest_inventory[self.name]['amount'] += 1
+                    player.quest_inventory[self.name]['available'] += 1
+                else:
+                    player.quest_inventory[self.name] = {'amount': 1, 'available': 1}
+
         elif self.item_type == 'Take All':
             pass
 

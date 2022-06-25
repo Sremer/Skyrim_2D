@@ -12,4 +12,4 @@ class Loot(pygame.sprite.Sprite):
 
         # list of loot
         self.loot = [['Take All x1', 'Take All'], ['lance x1', 'weapon'], ['steel x1', 'armor'],
-                     ['sword x2', 'weapon'], ['gold x100', 'gold'], ['Exit x1', 'Exit']]
+                     ['sword x2', 'weapon'], ['gold x100', 'gold'], ['lunch money x1', 'quest'], ['Exit x1', 'Exit']]

@@ -90,11 +90,16 @@ npc_data = {
 # Quests
 
 quest_master_database = {
-    'missing lunchbox': {
+    'lunch money': {
         'dialogue': {
-            'start': 'That squid over there has took my lunchbox! Please get it back for me?',
+            'start': 'That squid over there has took my lunch money! Please get it back for me?',
             'during': 'I\'m just so hungry...',
             'finish': 'Thank you! Now I can enjoy my lunch!'
-        }
+        },
+        'objective': {
+            'type': 'get',
+            'what': 'lunch money'
+        },
+        'prereq': None
     }
 }

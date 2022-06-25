@@ -1,17 +1,15 @@
 import pygame
 from settings import *
 
-quest_database = {
-
-
-}
-
 
 class Quest:
-    def __init__(self, name, can_start=False):
+    def __init__(self, name):
         self.name = name
-        self.can_start = can_start
         self.active = False
-        self.completed = False
+        self.finished = False
+        self.locked = bool(quest_master_database[self.name]['prereq'])
+        self.type = quest_master_database[self.name]['objective']['type']
+        self.what = quest_master_database[self.name]['objective']['what']
 
-        # full_reqs = quest_data[name][]
+        # quest details
+        self.reqs = self.type + self.what
