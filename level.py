@@ -148,8 +148,6 @@ class Level:
                 'what': quest_master_database[quest]['objective']['what']
             }
 
-        print(self.quest_database)
-
     def start_quest(self, quest_name):
         self.quest_database[quest_name]['active'] = True
         self.active_quests.append(quest_name)
@@ -168,9 +166,6 @@ class Level:
         if quest_type == 'get':
             what = self.quest_database[quest_name]['what']
             self.player.quest_inventory.pop(what)
-
-        print(self.active_quests)
-        print(self.quest_database)
 
     def create_magic(self, style, strength, cost):
         if style == 'heal':
@@ -250,6 +245,7 @@ class Level:
         if self.player.exp >= self.player.exp_to_level_up:
             self.player.level_up()
             self.menu.nr_level_ups += 1
+            self.text_generator.add_to_queue('level up')
 
     def create_loot(self, pos):
         Loot(pos, [self.visible_sprites, self.obstacle_sprites, self.loot_sprites])
