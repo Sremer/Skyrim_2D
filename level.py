@@ -15,6 +15,7 @@ from loot_menu import LootMenu
 from projectile import Projectile, Target, LongShotArrow
 from npc import NPC, SpeechBox
 from quest import QuestChecker
+from text import TextGenerator
 
 
 class Level:
@@ -66,6 +67,9 @@ class Level:
         self.active_quests = []
         self.create_quest_database()
         self.quest_checker = QuestChecker(self.quest_database)
+
+        # text generation
+        self.text_generator = TextGenerator()
 
     def create_map(self):
         layout = {
@@ -149,12 +153,16 @@ class Level:
     def start_quest(self, quest_name):
         self.quest_database[quest_name]['active'] = True
         self.active_quests.append(quest_name)
+        self.text_generator.add_to_queue(quest_name + ' started')
 
     def finish_quest(self, quest_name):
         self.quest_database[quest_name]['active'] = False
         self.quest_database[quest_name]['finished'] = True
         self.active_quests.remove(quest_name)
         self.player.exp += quest_master_database[quest_name]['xp']
+        self.text_generator.add_to_queue('+50 exp')
+        self.player.money += quest_master_database[quest_name]['money']
+        self.text_generator.add_to_queue('+100 gold')
         quest_type = self.quest_database[quest_name]['type']
 
         if quest_type == 'get':
@@ -365,6 +373,7 @@ class Level:
             self.target_sprite.update()
             self.player_attack_logic()
             self.remove_projectiles()
+            self.text_generator.update()
 
             # set the menu back
             self.menu.menu_type = 'General'

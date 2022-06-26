@@ -101,6 +101,7 @@ quest_master_database = {
             'what': 'lunch money'
         },
         'prereq': None,
-        'xp': 500
+        'xp': 500,
+        'money': 100
     }
 }
