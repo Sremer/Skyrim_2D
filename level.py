@@ -14,7 +14,7 @@ from Loot import Loot
 from loot_menu import LootMenu
 from projectile import Projectile, Target, LongShotArrow
 from npc import NPC, SpeechBox
-from quest import Quest
+from quest import QuestChecker
 
 
 class Level:
@@ -65,6 +65,7 @@ class Level:
         self.quest_database = {}
         self.active_quests = []
         self.create_quest_database()
+        self.quest_checker = QuestChecker(self.quest_database)
 
     def create_map(self):
         layout = {
@@ -137,6 +138,7 @@ class Level:
             self.quest_database[quest] = {
                 'active': False,
                 'finished': False,
+                'done': False,
                 'locked': bool(quest_master_database[quest]['prereq']),
                 'type': quest_master_database[quest]['objective']['type'],
                 'what': quest_master_database[quest]['objective']['what']
@@ -147,6 +149,20 @@ class Level:
     def start_quest(self, quest_name):
         self.quest_database[quest_name]['active'] = True
         self.active_quests.append(quest_name)
+
+    def finish_quest(self, quest_name):
+        self.quest_database[quest_name]['active'] = False
+        self.quest_database[quest_name]['finished'] = True
+        self.active_quests.remove(quest_name)
+        self.player.exp += quest_master_database[quest_name]['xp']
+        quest_type = self.quest_database[quest_name]['type']
+
+        if quest_type == 'get':
+            what = self.quest_database[quest_name]['what']
+            self.player.quest_inventory.pop(what)
+
+        print(self.active_quests)
+        print(self.quest_database)
 
     def create_magic(self, style, strength, cost):
         if style == 'heal':
@@ -286,7 +302,7 @@ class Level:
 
     def is_there_unlocked_quest(self, npc_name):
         for quest in npc_data[npc_name]['quests']:
-            if not self.quest_database[quest]['locked']:
+            if not self.quest_database[quest]['locked'] and not self.quest_database[quest]['finished']:
                 return quest
 
         return None
@@ -295,7 +311,11 @@ class Level:
         quest = self.is_there_unlocked_quest(name)
 
         if quest:
-            if self.quest_database[quest]['active']:
+            if self.quest_database[quest]['active'] and self.quest_database[quest]['done']:
+                speech = quest_master_database[quest]['dialogue']['finish']
+                self.finish_quest(quest)
+
+            elif self.quest_database[quest]['active']:
                 speech = quest_master_database[quest]['dialogue']['during']
             else:
                 speech = quest_master_database[quest]['dialogue']['start']
@@ -313,6 +333,9 @@ class Level:
         self.target_sprite.draw(self.display_surface)
         self.ui.display(self.player)
         self.level_up()
+
+        # check quest status
+        self.quest_checker.run(self.active_quests, self.player)
 
         if self.game_paused:
             self.menu.display(self.active_quests)
