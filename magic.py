@@ -61,6 +61,30 @@ class MagicPlayer:
                     y = player.rect.centery + offset_y + randint(-TILESIZE // 3, TILESIZE // 3)
                     self.animation_player.create_particles('flame', (x, y), groups)
 
+    def lightning(self, player, cost, groups):
+        if player.energy >= cost:
+            player.energy -= cost
+
+            if player.status.split('_')[0] == 'right':
+                direction = pygame.math.Vector2(1, 0)
+            elif player.status.split('_')[0] == 'left':
+                direction = pygame.math.Vector2(-1, 0)
+            elif player.status.split('_')[0] == 'up':
+                direction = pygame.math.Vector2(0, -1)
+            else:
+                direction = pygame.math.Vector2(0, 1)
+
+            if direction.x:  # horizontal
+                offset_x = (direction.x * 5) * TILESIZE
+                x = player.rect.centerx + offset_x + randint(-TILESIZE // 4, TILESIZE // 4)
+                y = player.rect.centery + randint(-TILESIZE // 2, TILESIZE // 2) - 65
+                self.animation_player.create_particles('lightning', (x, y), groups)
+            else:  # vertical
+                offset_y = (direction.y * 5) * TILESIZE
+                x = player.rect.centerx + randint(-TILESIZE // 3, TILESIZE // 3)
+                y = player.rect.centery + offset_y + randint(-TILESIZE // 3, TILESIZE // 3)
+                self.animation_player.create_particles('lightning', (x, y), groups)
+
     # abilities
 
     def ground_smash(self, player, groups):

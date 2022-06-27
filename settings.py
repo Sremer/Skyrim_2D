@@ -53,7 +53,8 @@ magic_data = {
     'flame': {'strength': 5, 'cost': 20, 'graphic': 'graphics/particles/flame/fire.png'},
     'heal': {'strength': 20, 'cost': 10, 'graphic': 'graphics/particles/heal/heal.png'},
     'invisibility': {'strength': 5, 'cost': 20, 'graphic': 'graphics/particles/'},
-    'defense up': {'strength': 0.5, 'cost': 20, 'graphic': 'graphics/particles/'}
+    'defense up': {'strength': 0.5, 'cost': 20, 'graphic': 'graphics/particles/'},
+    'lightning': {'strength': 10, 'cost': 40, 'graphic': 'graphics/particles/'}
 }
 
 # enemy
@@ -75,7 +76,8 @@ monster_data = {
 
 class_data = {
     'None': {'multipliers': {}, 'abilities': [], 'magic': []},
-    'knight': {'multipliers': {'sword': 0.5, 'spear': 0.3, 'heavy': 0.5}, 'abilities': ['ground smash'], 'magic': ['defense up']},
+    'knight': {'multipliers': {'sword': 0.5, 'spear': 0.3, 'heavy': 0.5}, 'abilities': ['ground smash'],
+               'magic': ['defense up']},
     'rogue': {'multipliers': {'knife': 0.5, 'light': 0.3}, 'abilities': ['dash'], 'magic': ['invisibility']},
     'archer': {'multipliers': {'bow': 0.5, 'light': 0.3}, 'abilities': ['long shot'], 'magic': ['']}
 }
@@ -83,8 +85,11 @@ class_data = {
 # NPC
 
 npc_data = {
-    'villager': {'talk': ['Nice Day!', 'Here let me tell you my story... I was 3 when I first realized that I wanted to bake. Baking became my passion; my obsession. I would stay up for long days and nights creating the most beautiful cakes...then one day I said nah.'],
-                 'quests': ['lunch money']}
+    'villager': {'talk': ['Nice Day!',
+                          'Here let me tell you my story... I was 3 when I first realized that I wanted to bake. Baking became my passion; my obsession. I would stay up for long days and nights creating the most beautiful cakes...then one day I said nah.'],
+                 'quests': ['lunch money']},
+    'man-bun': {'talk': ['I will follow you young one...'],
+                'quests': None}
 }
 
 # Quests

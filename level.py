@@ -13,7 +13,7 @@ from magic import MagicPlayer
 from Loot import Loot
 from loot_menu import LootMenu
 from projectile import Projectile, Target, LongShotArrow
-from npc import NPC, SpeechBox
+from npc import NPC, SpeechBox,Helper
 from quest import QuestChecker
 from text import TextGenerator
 
@@ -71,6 +71,8 @@ class Level:
         # text generation
         self.text_generator = TextGenerator()
 
+    # general
+
     def create_map(self):
         layout = {
             'grass': import_csv_layout('map/test_area_grass.csv'),
@@ -122,6 +124,9 @@ class Level:
                             elif col == '2':
                                 NPC((x, y), [self.visible_sprites, self.npc_sprites], 'villager', 'npc', self.obstacle_sprites)
 
+                            elif col == '3':
+                                NPC((x, y), [self.visible_sprites, self.npc_sprites], 'man-bun', 'npc', self.obstacle_sprites)
+
                             else:
                                 monster_name = 'squid'
                                 Enemy(
@@ -136,6 +141,8 @@ class Level:
 
         # create loot menu
         self.loot_menu = LootMenu(self.player)
+
+    # questing
 
     def create_quest_database(self):
         for quest in quest_master_database:
@@ -161,11 +168,13 @@ class Level:
         self.text_generator.add_to_queue('+50 exp')
         self.player.money += quest_master_database[quest_name]['money']
         self.text_generator.add_to_queue('+100 gold')
-        quest_type = self.quest_database[quest_name]['type']
 
+        quest_type = self.quest_database[quest_name]['type']
         if quest_type == 'get':
             what = self.quest_database[quest_name]['what']
             self.player.quest_inventory.pop(what)
+
+    # player actions
 
     def create_magic(self, style, strength, cost):
         if style == 'heal':
@@ -179,6 +188,9 @@ class Level:
 
         if style == 'defense up':
             self.magic_player.defense_up(self.player, strength, cost, [self.visible_sprites])
+
+        if style == 'lightning':
+            self.magic_player.lightning(self.player, cost, [self.visible_sprites, self.attack_sprites])
 
     def create_attack(self, hand):
         self.current_attack.append(Weapon(self.player, [self.visible_sprites, self.attack_sprites], hand))
@@ -238,6 +250,8 @@ class Level:
     def add_exp(self, amount):
         self.player.exp += amount
 
+    # menus
+
     def toggle_menu(self):
         self.game_paused = not self.game_paused
 
@@ -253,6 +267,8 @@ class Level:
     def show_loot(self, loot_sprite):
         self.loot_paused = True
         self.current_loot_sprite = loot_sprite
+
+    # projectile logic
 
     def remove_projectiles(self):
         if self.projectiles_to_remove:
@@ -304,12 +320,16 @@ class Level:
             for sprite in self.target_sprite:
                 sprite.kill()
 
-    def is_there_unlocked_quest(self, npc_name):
-        for quest in npc_data[npc_name]['quests']:
-            if not self.quest_database[quest]['locked'] and not self.quest_database[quest]['finished']:
-                return quest
+    # NPC
 
-        return None
+    def is_there_unlocked_quest(self, npc_name):
+        if npc_data[npc_name]['quests']:
+            for quest in npc_data[npc_name]['quests']:
+                if not self.quest_database[quest]['locked'] and not self.quest_database[quest]['finished']:
+                    return quest
+            return None
+        else:
+            return None
 
     def create_speech(self, name):
         quest = self.is_there_unlocked_quest(name)

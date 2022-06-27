@@ -64,6 +64,7 @@ class Player(Entity):
             'bow': {'amount': 1, 'available': 1}
         }
         self.magic_inventory = {
+            'lightning': 1,
             'flame': 1,
             'heal': 1
         }
@@ -255,7 +256,6 @@ class Player(Entity):
             if keys[pygame.K_SPACE] and self.talk and self.can_talk:
                 for npc in self.npc_sprites:
                     if npc.talk and not self.talking:
-                        speech = choice(npc_data[npc.name]['talk'])
                         self.create_speech(npc.name)
                         self.talking = True
 
@@ -342,6 +342,9 @@ class Player(Entity):
 
             if keys[pygame.K_r]:
                 self.exp += 100
+
+            if keys[pygame.K_t]:
+                self.energy = self.stats['energy']
 
     def get_status(self):
 

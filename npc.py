@@ -113,9 +113,8 @@ class NPC(Entity):
             player.talk = True
             self.change = False
         elif self.talk and distance > self.talk_radius:
-            player.talk = False
-        else:
             self.talk = False
+            player.talk = False
 
         if self.direction.x == 0 and self.direction.y == 0:
             if not 'idle' in self.status:
@@ -168,6 +167,24 @@ class NPC(Entity):
 
     def npc_update(self, player):
         self.get_status(player)
+
+
+class Helper(NPC):
+    def __init__(self, pos, groups, name, sprite_type, obstacle_sprites):
+        super().__init__(pos, groups, name, sprite_type, obstacle_sprites)
+        self.helper = False
+
+    def update(self):
+        self.animate()
+
+        if self.helper:
+            pass
+
+        else:
+            if self.change:
+                self.movement_logic()
+            self.cooldowns()
+            self.move(self.speed)
 
 
 class SpeechBox(pygame.sprite.Sprite):

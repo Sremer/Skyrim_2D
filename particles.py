@@ -12,6 +12,7 @@ class AnimationPlayer:
             'aura': import_folder('graphics/particles/aura'),
             'heal': import_folder('graphics/particles/heal/frames'),
             'defense up': import_folder('graphics/particles/white_aura'),
+            'lightning': import_folder('graphics/particles/lightning'),
 
             # abilities
             'ground smash': import_folder('graphics/particles/orange_circle'),
