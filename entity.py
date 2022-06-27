@@ -1,5 +1,7 @@
 import pygame
+from settings import *
 from math import sin
+from support import import_folder
 
 
 class Entity(pygame.sprite.Sprite):
@@ -8,6 +10,12 @@ class Entity(pygame.sprite.Sprite):
         self.frame_index = 0
         self.animation_speed = 0.15
         self.direction = pygame.math.Vector2()
+
+    def import_graphics(self, name):
+        self.animations = {'idle': [], 'move': [], 'attack': []}
+        main_path = f'graphics/npcs/{name}/'
+        for animation in self.animations.keys():
+            self.animations[animation] = import_folder(main_path + animation)
 
     def move(self, speed):
         if self.direction.magnitude() != 0:
@@ -42,4 +50,238 @@ class Entity(pygame.sprite.Sprite):
             return 255
         else:
             return 0
+
+
+class Undead(Entity):
+    def __init__(self, undead_type, pos, groups, obstacle_sprites, attackable_sprites):
+        super().__init__(groups)
+
+        # general
+        self.sprite_type = 'summoned'
+        self.summoned_type = undead_type
+
+        # graphics setup
+        self.import_summoned_assets()
+        self.status = 'down_idle'
+        self.image = self.animations[self.status][self.frame_index]
+        self.rect = self.image.get_rect(topleft=pos)
+
+        # movement
+        self.rect = self.image.get_rect(topleft=pos)
+        self.hitbox = self.rect.inflate(0, -10)
+        self.obstacle_sprites = obstacle_sprites
+
+        # stats
+        self_info = summoned_data[self.summoned_type]
+        self.health = self_info['health']
+        self.speed = self_info['speed']
+        self.attack_damage = self_info['damage']
+        self.resistance = self_info['resistance']
+        self.attack_radius = self_info['attack_radius']
+        self.notice_radius = self_info['notice_radius']
+        self.attack_type = self_info['attack_type']
+
+        # enemy interaction
+        self.can_attack = True
+        self.attack_time = None
+        self.attack_cooldown = 300
+        # self.trigger_death_particles = trigger_death_particles
+        self.attackable_sprites = attackable_sprites
+
+        # attack
+        self.attacking = False
+        self.attacking_time = None
+        self.attacking_duration = 200
+
+        # invincibility timer
+        self.vulnerable = True
+        self.hit_time = None
+        self.invincibility_duration = 300
+
+    def import_summoned_assets(self):
+        character_path = f'graphics/npcs/{self.summoned_type}/'
+        self.animations = {'up': [], 'down': [], 'left': [], 'right': [],
+                           'right_idle': [], 'left_idle': [], 'up_idle': [], 'down_idle': [],
+                           'right_attack': [], 'left_attack': [], 'up_attack': [], 'down_attack': [], 'dead': []}
+
+        for animation in self.animations.keys():
+            full_path = character_path + animation
+            self.animations[animation] = import_folder(full_path)
+
+    def get_enemy_distance_direction(self):
+        self_vec = pygame.math.Vector2(self.rect.center)
+        enemy_vec = pygame.math.Vector2()
+        distance = 0
+        closest_distance = 500
+
+        for sprite in self.attackable_sprites:
+            if sprite.sprite_type == 'enemy':
+                enemy_vec = pygame.math.Vector2(sprite.rect.center)
+                distance = (enemy_vec - self_vec).magnitude()
+
+                if distance < closest_distance:
+                    closest_distance = distance
+
+        if closest_distance > 0:
+            direction = (enemy_vec - self_vec).normalize()
+        else:
+            direction = pygame.math.Vector2()
+
+        return closest_distance, direction
+
+    def get_status(self):
+        distance = self.get_enemy_distance_direction()[0]
+
+        if distance <= self.attack_radius:
+
+            if self.can_attack:
+                self.can_attack = False
+                self.attack_time = pygame.time.get_ticks()
+                self.attacking = True
+                self.attacking_time = pygame.time.get_ticks()
+
+            elif not self.can_attack and self.attacking:
+                if not 'attack' in self.status:
+                    if 'idle' in self.status:
+                        self.status = self.status.replace('_idle', '_attack')
+                    else:
+                        self.status = self.status + '_attack'
+
+            else:
+                if not 'idle' in self.status:
+                    if 'attack' in self.status:
+                        self.status = self.status.replace('_attack', '_idle')
+                    else:
+                        self.status = self.status + '_idle'
+
+        elif distance <= self.notice_radius:
+            if 'idle' in self.status:
+                self.status = self.status.replace('_idle', '')
+            if 'attack' in self.status:
+                self.status = self.status.replace('_attack', '')
+
+        else:
+            if 'attack' in self.status:
+                self.status = self.status.replace('_attack', '')
+            if not 'idle' in self.status and not 'attack' in self.status:
+                self.status = self.status + '_idle'
+
+        print(self.status)
+
+    def actions(self):
+        if 'attack' in self.status and self.can_attack:
+            pass
+
+        elif not 'idle' in self.status and not 'attack' in self.status:
+            self.direction = self.get_enemy_distance_direction()[1]
+
+        else:
+            self.direction = pygame.math.Vector2()
+
+    def animate(self):
+        animation = self.animations[self.status]
+
+        # loop over the frame index
+        self.frame_index += self.animation_speed
+        if self.frame_index >= len(animation):
+            self.frame_index = 0
+
+        # set the image
+        self.image = animation[int(self.frame_index)]
+        self.rect = self.image.get_rect(center=self.hitbox.center)
+
+        if not self.vulnerable:
+            alpha = self.wave_value()
+            self.image.set_alpha(alpha)
+        else:
+            self.image.set_alpha(255)
+
+    def cooldowns(self):
+        current_time = pygame.time.get_ticks()
+        if not self.can_attack:
+            if current_time - self.attack_time >= self.attack_cooldown:
+                self.can_attack = True
+
+        if self.attacking:
+            if current_time - self.attacking_time >= self.attacking_duration:
+                self.attacking = False
+
+        if not self.vulnerable:
+            if current_time - self.hit_time >= self.invincibility_duration:
+                self.vulnerable = True
+
+    def move(self, speed, player):
+        if self.direction.magnitude() != 0:
+            self.direction = self.direction.normalize()
+
+        if self.direction.x > 0:
+            self.status = 'right'
+        elif self.direction.x < 0:
+            self.status = 'left'
+        elif self.direction.y > 0:
+            self.status = 'down'
+        elif self.direction.y < 0:
+            self.status = 'up'
+
+        self.hitbox.x += self.direction.x * speed
+        self.collision('horizontal', player)
+        self.hitbox.y += self.direction.y * speed
+        self.collision('vertical', player)
+        self.rect.center = self.hitbox.center
+
+    def collision(self, direction, player):
+        if direction == 'horizontal':
+            for sprite in self.obstacle_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.x > 0:  # moving right
+                        self.hitbox.right = sprite.hitbox.left
+                    if self.direction.x < 0:  # moving left
+                        self.hitbox.left = sprite.hitbox.right
+
+            if player.hitbox.colliderect(self.hitbox):
+                if self.direction.x > 0:  # moving right
+                    self.hitbox.right = player.hitbox.left
+                if self.direction.x < 0:  # moving left
+                    self.hitbox.left = player.hitbox.right
+
+            for sprite in self.attackable_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.x > 0:  # moving right
+                        self.hitbox.right = sprite.hitbox.left
+                    if self.direction.x < 0:  # moving left
+                        self.hitbox.left = sprite.hitbox.right
+
+        if direction == 'vertical':
+            for sprite in self.obstacle_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.y > 0:  # moving down
+                        self.hitbox.bottom = sprite.hitbox.top
+                    if self.direction.y < 0:  # moving up
+                        self.hitbox.top = sprite.hitbox.bottom
+
+            if player.hitbox.colliderect(self.hitbox):
+                if self.direction.y > 0:  # moving down
+                    self.hitbox.bottom = player.hitbox.top
+                if self.direction.y < 0:  # moving up
+                    self.hitbox.top = player.hitbox.bottom
+
+            for sprite in self.attackable_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.y > 0:  # moving down
+                        self.hitbox.bottom = sprite.hitbox.top
+                    if self.direction.y < 0:  # moving up
+                        self.hitbox.top = sprite.hitbox.bottom
+
+    def update(self):
+        # self.hit_reaction()
+        # self.move(self.speed)
+        self.animate()
+        self.cooldowns()
+        # self.check_death()
+
+    def summoned_update(self, player):
+        self.move(self.speed, player)
+        self.get_status()
+        self.actions()
+
 

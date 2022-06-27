@@ -66,7 +66,8 @@ class Player(Entity):
         self.magic_inventory = {
             'lightning': 1,
             'flame': 1,
-            'heal': 1
+            'heal': 1,
+            'summon': 1
         }
         self.armor_inventory = {
             'skin': {'amount': 1, 'available': 0},

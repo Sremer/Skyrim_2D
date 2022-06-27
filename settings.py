@@ -54,7 +54,8 @@ magic_data = {
     'heal': {'strength': 20, 'cost': 10, 'graphic': 'graphics/particles/heal/heal.png'},
     'invisibility': {'strength': 5, 'cost': 20, 'graphic': 'graphics/particles/'},
     'defense up': {'strength': 0.5, 'cost': 20, 'graphic': 'graphics/particles/'},
-    'lightning': {'strength': 10, 'cost': 40, 'graphic': 'graphics/particles/'}
+    'lightning': {'strength': 10, 'cost': 40, 'graphic': 'graphics/particles/'},
+    'summon': {'strength': 1, 'cost': 40, 'graphic': 'graphics/particles/'}
 }
 
 # enemy
@@ -71,6 +72,13 @@ monster_data = {
     'bamboo': {'health': 70, 'exp': 120, 'damage': 6, 'attack_type': 'leaf_attack',
                'attack_sound': 'audio/attack/slash.wav', 'speed': 3, 'resistance': 3, 'attack_radius': 50,
                'notice_radius': 300}}
+
+# summoned
+summoned_data = {
+    'skeleton': {'health': 50, 'damage': 10, 'attack_type': 'punch',
+                 'speed': 2, 'resistance': 3, 'attack_radius': 80,
+                 'notice_radius': 360}
+}
 
 # classes
 

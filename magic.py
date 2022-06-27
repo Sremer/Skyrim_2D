@@ -1,6 +1,7 @@
 import pygame
 from settings import *
 from random import randint
+from entity import Undead
 
 
 class MagicPlayer:
@@ -84,6 +85,12 @@ class MagicPlayer:
                 x = player.rect.centerx + randint(-TILESIZE // 3, TILESIZE // 3)
                 y = player.rect.centery + offset_y + randint(-TILESIZE // 3, TILESIZE // 3)
                 self.animation_player.create_particles('lightning', (x, y), groups)
+
+    def summon(self, player, cost, groups, obstacle_sprites, attackable_sprites, summon_type):
+        if player.energy >= cost:
+            player.energy -= cost
+
+            Undead(summon_type, (player.rect.centerx - 80, player.rect.centery), groups, obstacle_sprites, attackable_sprites)
 
     # abilities
 

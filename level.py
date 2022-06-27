@@ -192,6 +192,9 @@ class Level:
         if style == 'lightning':
             self.magic_player.lightning(self.player, cost, [self.visible_sprites, self.attack_sprites])
 
+        if style == 'summon':
+            self.magic_player.summon(self.player, cost, [self.visible_sprites], self.obstacle_sprites, self.attackable_sprites, 'skeleton')
+
     def create_attack(self, hand):
         self.current_attack.append(Weapon(self.player, [self.visible_sprites, self.attack_sprites], hand))
 
@@ -386,6 +389,7 @@ class Level:
             self.visible_sprites.update()
             self.visible_sprites.enemy_update(self.player)
             self.visible_sprites.npc_update(self.player)
+            self.visible_sprites.summoned_update(self.player)
             self.target_sprite.update()
             self.player_attack_logic()
             self.remove_projectiles()
@@ -435,3 +439,9 @@ class YSortCameraGroup(pygame.sprite.Group):
                        hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'npc']
         for npc in npc_sprites:
             npc.npc_update(player)
+
+    def summoned_update(self, player):
+        summoned_sprites = [sprite for sprite in self.sprites() if
+                       hasattr(sprite, 'sprite_type') and sprite.sprite_type == 'summoned']
+        for summoned in summoned_sprites:
+            summoned.summoned_update(player)
