@@ -66,10 +66,15 @@ class Undead(Entity):
         self.image = self.animations[self.status][self.frame_index]
         self.rect = self.image.get_rect(topleft=pos)
 
+        # life
+        self.life_duration = 20000
+        self.time_alive = pygame.time.get_ticks()
+
         # movement
         self.rect = self.image.get_rect(topleft=pos)
         self.hitbox = self.rect.inflate(0, -10)
         self.obstacle_sprites = obstacle_sprites
+        self.following = False
 
         # stats
         self_info = summoned_data[self.summoned_type]
@@ -129,8 +134,21 @@ class Undead(Entity):
 
         return closest_distance, direction
 
-    def get_status(self):
+    def get_player_distance_direction(self, player):
+        summoned_vec = pygame.math.Vector2(self.rect.center)
+        player_vec = pygame.math.Vector2(player.rect.center)
+        distance = (player_vec - summoned_vec).magnitude()
+
+        if distance > 0:
+            direction = (player_vec - summoned_vec).normalize()
+        else:
+            direction = pygame.math.Vector2()
+
+        return distance, direction
+
+    def get_status(self, player):
         distance = self.get_enemy_distance_direction()[0]
+        distance_to_player = self.get_player_distance_direction(player)[0]
 
         if distance <= self.attack_radius:
 
@@ -154,26 +172,40 @@ class Undead(Entity):
                     else:
                         self.status = self.status + '_idle'
 
+            self.following = False
+
         elif distance <= self.notice_radius:
             if 'idle' in self.status:
                 self.status = self.status.replace('_idle', '')
             if 'attack' in self.status:
                 self.status = self.status.replace('_attack', '')
+            self.following = False
+
+        elif distance_to_player > self.attack_radius:
+            if 'attack' in self.status:
+                self.status = self.status.replace('_attack', '')
+            if 'idle' in self.status:
+                self.status = self.status.replace('_idle', '')
+            self.following = True
 
         else:
             if 'attack' in self.status:
                 self.status = self.status.replace('_attack', '')
-            if not 'idle' in self.status and not 'attack' in self.status:
-                self.status = self.status + '_idle'
 
-        print(self.status)
+            if 'idle' in player.status:
+                if not 'idle' in self.status and not 'attack' in self.status:
+                    self.status = self.status + '_idle'
 
-    def actions(self):
+    def actions(self, player):
         if 'attack' in self.status and self.can_attack:
             pass
 
         elif not 'idle' in self.status and not 'attack' in self.status:
-            self.direction = self.get_enemy_distance_direction()[1]
+            if not self.following:
+                self.direction = self.get_enemy_distance_direction()[1]
+
+            else:
+                self.direction = self.get_player_distance_direction(player)[1]
 
         else:
             self.direction = pygame.math.Vector2()
@@ -210,18 +242,23 @@ class Undead(Entity):
             if current_time - self.hit_time >= self.invincibility_duration:
                 self.vulnerable = True
 
+        if current_time - self.time_alive >= self.life_duration:
+            self.die()
+
     def move(self, speed, player):
         if self.direction.magnitude() != 0:
             self.direction = self.direction.normalize()
 
-        if self.direction.x > 0:
-            self.status = 'right'
-        elif self.direction.x < 0:
-            self.status = 'left'
-        elif self.direction.y > 0:
-            self.status = 'down'
-        elif self.direction.y < 0:
-            self.status = 'up'
+        if abs(self.direction.x * speed) > abs(self.direction.y * speed):
+            if self.direction.x > 0:
+                self.status = 'right'
+            elif self.direction.x < 0:
+                self.status = 'left'
+        else:
+            if self.direction.y > 0:
+                self.status = 'down'
+            elif self.direction.y < 0:
+                self.status = 'up'
 
         self.hitbox.x += self.direction.x * speed
         self.collision('horizontal', player)
@@ -272,16 +309,18 @@ class Undead(Entity):
                     if self.direction.y < 0:  # moving up
                         self.hitbox.top = sprite.hitbox.bottom
 
+    def die(self):
+        self.kill()
+
     def update(self):
         # self.hit_reaction()
-        # self.move(self.speed)
         self.animate()
         self.cooldowns()
         # self.check_death()
 
     def summoned_update(self, player):
         self.move(self.speed, player)
-        self.get_status()
-        self.actions()
+        self.get_status(player)
+        self.actions(player)
 
 
