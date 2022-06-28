@@ -75,7 +75,7 @@ monster_data = {
 
 # summoned
 summoned_data = {
-    'skeleton': {'health': 50, 'damage': 10, 'attack_type': 'punch',
+    'skeleton': {'health': 300, 'damage': 10, 'attack_type': 'punch',
                  'speed': 3, 'resistance': 3, 'attack_radius': 80,
                  'notice_radius': 360}
 }

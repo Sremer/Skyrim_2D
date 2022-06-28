@@ -97,6 +97,7 @@ class Undead(Entity):
         self.attacking = False
         self.attacking_time = None
         self.attacking_duration = 200
+        self.attack_active = False
 
         # invincibility timer
         self.vulnerable = True
@@ -157,6 +158,7 @@ class Undead(Entity):
                 self.attack_time = pygame.time.get_ticks()
                 self.attacking = True
                 self.attacking_time = pygame.time.get_ticks()
+                self.attack_active = True
 
             elif not self.can_attack and self.attacking:
                 if not 'attack' in self.status:
@@ -197,8 +199,9 @@ class Undead(Entity):
                     self.status = self.status + '_idle'
 
     def actions(self, player):
-        if 'attack' in self.status and self.can_attack:
-            pass
+        if 'attack' in self.status and self.attack_active:
+            print('made it')
+            self.attack_logic(player)
 
         elif not 'idle' in self.status and not 'attack' in self.status:
             if not self.following:
@@ -309,14 +312,35 @@ class Undead(Entity):
                     if self.direction.y < 0:  # moving up
                         self.hitbox.top = sprite.hitbox.bottom
 
+    def attack_logic(self, player):
+        for sprite in self.attackable_sprites:
+            if sprite.hitbox.colliderect(self.hitbox) and sprite.sprite_type == 'enemy':
+                sprite.get_damage(player, 'summoned')
+
+        self.attack_active = False
+
+    def get_damage(self, amount):
+        if self.vulnerable:
+            self.health -= amount
+            self.hit_time = pygame.time.get_ticks()
+            self.vulnerable = False
+
+    def hit_reaction(self):
+        if not self.vulnerable:
+            self.direction *= -self.resistance
+
+    def check_death(self):
+        if self.health <= 0:
+            self.die()
+
     def die(self):
         self.kill()
 
     def update(self):
-        # self.hit_reaction()
+        self.hit_reaction()
         self.animate()
         self.cooldowns()
-        # self.check_death()
+        self.check_death()
 
     def summoned_update(self, player):
         self.move(self.speed, player)

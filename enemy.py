@@ -6,7 +6,7 @@ from support import *
 
 class Enemy(Entity):
     def __init__(self, monster_name, pos, groups, obstacle_sprites, damage_player,
-                 trigger_death_particles, add_exp, create_loot):
+                 trigger_death_particles, add_exp, create_loot, friendly_sprites):
 
         # general setup
         super().__init__(groups)
@@ -22,6 +22,7 @@ class Enemy(Entity):
         self.rect = self.image.get_rect(topleft=pos)
         self.hitbox = self.rect.inflate(0, -10)
         self.obstacle_sprites = obstacle_sprites
+        self.friendly_sprites = friendly_sprites
 
         # stun
         self.stunned = False
@@ -48,6 +49,7 @@ class Enemy(Entity):
         self.trigger_death_particles = trigger_death_particles
         self.add_exp = add_exp
         self.create_loot = create_loot
+        self.target = 'player'
 
         # invincibility timer
         self.vulnerable = True
@@ -82,8 +84,57 @@ class Enemy(Entity):
 
         return distance, direction
 
+    def get_friendly_sprite_direction(self):
+        enemy_vec = pygame.math.Vector2(self.rect.center)
+        friendly_vec = pygame.math.Vector2()
+        distance = 0
+        closest_distance = 500
+
+        for sprite in self.friendly_sprites:
+            if sprite.sprite_type != 'player':
+                friendly_vec = pygame.math.Vector2(sprite.rect.center)
+                distance = (friendly_vec - enemy_vec).magnitude()
+
+                if distance < closest_distance:
+                    closest_distance = distance
+
+        if closest_distance > 0:
+            direction = (friendly_vec - enemy_vec).normalize()
+        else:
+            direction = pygame.math.Vector2()
+
+        return closest_distance, direction
+
+    def get_closest_sprite(self):
+        closest_sprite = None
+        enemy_vec = pygame.math.Vector2(self.rect.center)
+        friendly_vec = pygame.math.Vector2()
+        closest_distance = 500
+
+        for sprite in self.friendly_sprites:
+            if sprite.sprite_type != 'player':
+                friendly_vec = pygame.math.Vector2(sprite.rect.center)
+                distance = (friendly_vec - enemy_vec).magnitude()
+
+                if distance < closest_distance:
+                    closest_distance = distance
+                    closest_sprite = sprite
+
+        return closest_sprite
+
+    def get_closest_target(self, player):
+        player_vec = self.get_player_distance_direction(player)
+        other_vec = self.get_friendly_sprite_direction()
+
+        if player_vec[0] < other_vec[0]:
+            self.target = 'player'
+            return player_vec
+        else:
+            self.target = 'other'
+            return other_vec
+
     def get_status(self, player):
-        distance = self.get_player_distance_direction(player)[0]
+        distance = self.get_closest_target(player)[0]
 
         if distance <= self.attack_radius and self.can_attack and player.visible:
             if self.status != 'attack':
@@ -95,9 +146,14 @@ class Enemy(Entity):
             self.status = 'idle'
 
     def actions(self, player):
-        if self.status == 'attack':
+        if self.status == 'attack' and self.target == 'player':
             self.attack_time = pygame.time.get_ticks()
             self.damage_player(self.attack_damage, self.attack_type)
+
+        elif self.status == 'attack' and self.target == 'other':
+            self.attack_time = pygame.time.get_ticks()
+            closest_target = self.get_closest_sprite()
+            closest_target.get_damage(monster_data[self.monster_name]['damage'])
 
         elif self.status == 'move':
             self.direction = self.get_player_distance_direction(player)[1]
@@ -146,6 +202,8 @@ class Enemy(Entity):
                 self.health -= player.get_full_magic_damage()
             elif attack_type == 'arrow' or attack_type == 'long shot arrow':
                 self.health -= player.get_full_bow_damage(attack_type)
+            elif attack_type == 'summoned':
+                self.health -= player.get_full_summoned_damage()
             else:
                 self.health -= 10
             self.hit_time = pygame.time.get_ticks()

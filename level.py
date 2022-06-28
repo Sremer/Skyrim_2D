@@ -51,6 +51,9 @@ class Level:
         self.projectiles_to_remove = []
         self.target_sprite = pygame.sprite.Group()
 
+        # friendly sprites
+        self.friendly_sprites = pygame.sprite.Group()
+
         # sprite setup
         self.create_map()
 
@@ -104,7 +107,7 @@ class Level:
                         if style == 'entities':
                             if col == '0':
                                 self.player = Player((x, y),
-                                    [self.visible_sprites],
+                                    [self.visible_sprites, self.friendly_sprites],
                                     self.obstacle_sprites,
                                     self.attackable_sprites,
                                     self.loot_sprites,
@@ -137,7 +140,8 @@ class Level:
                                     self.damage_player,
                                     self.trigger_death_particles,
                                     self.add_exp,
-                                    self.create_loot)
+                                    self.create_loot,
+                                    self.friendly_sprites)
 
         # create loot menu
         self.loot_menu = LootMenu(self.player)
@@ -193,7 +197,7 @@ class Level:
             self.magic_player.lightning(self.player, cost, [self.visible_sprites, self.attack_sprites])
 
         if style == 'summon':
-            self.magic_player.summon(self.player, cost, [self.visible_sprites], self.obstacle_sprites, self.attackable_sprites, 'skeleton')
+            self.magic_player.summon(self.player, cost, [self.visible_sprites, self.friendly_sprites], self.obstacle_sprites, self.attackable_sprites, 'skeleton')
 
     def create_attack(self, hand):
         self.current_attack.append(Weapon(self.player, [self.visible_sprites, self.attack_sprites], hand))

@@ -485,6 +485,9 @@ class Player(Entity):
         spell_damage = magic_data[self.magic]['strength']
         return base_damage + spell_damage
 
+    def get_full_summoned_damage(self):
+        return summoned_data['skeleton']['damage']
+
     def get_full_bow_damage(self, arrow_type):
         if arrow_type == 'arrow':
             return weapon_data[self.weapon]['damage'] + 10
