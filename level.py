@@ -4,7 +4,7 @@ from support import *
 from tile import Tile
 from player import Player
 from random import choice, randint
-from weapon import Weapon
+from weapon import Weapon, Bow
 from enemy import Enemy
 from ui import UI
 from particles import AnimationPlayer
@@ -117,6 +117,7 @@ class Level:
                                     self.show_loot,
                                     self.create_smash,
                                     self.create_bow,
+                                    self.draw_bow,
                                     self.create_arrow,
                                     self.change_camera,
                                     self.create_target,
@@ -209,7 +210,10 @@ class Level:
         self.current_attack = []
 
     def create_bow(self):
-        self.current_attack.append(Weapon(self.player, [self.visible_sprites], 'bow'))
+        self.current_attack.append(Bow(self.player, [self.visible_sprites], 'bow'))
+
+    def draw_bow(self, new_status):
+        self.current_attack[0].status = new_status
 
     def create_arrow(self, range, type='arrow'):
         if type == 'arrow':

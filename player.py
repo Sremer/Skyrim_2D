@@ -8,7 +8,7 @@ from random import choice
 class Player(Entity):
     def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, loot_sprites,
                  create_attack, destroy_attack, create_magic, show_loot, create_smash,
-                 create_bow, create_arrow, change_camera, create_target, kill_target, target_sprite,
+                 create_bow, draw_bow, create_arrow, change_camera, create_target, kill_target, target_sprite,
                  npc_sprites, create_speech):
         super().__init__(groups)
         self.image = pygame.image.load('graphics/test/player.png').convert_alpha()
@@ -105,6 +105,7 @@ class Player(Entity):
         self.bow_drawn = False
         self.create_bow = create_bow
         self.create_arrow = create_arrow
+        self.draw_bow = draw_bow
         self.arrow_shot = False
         self.shot_time = None
         self.shot_cooldown = 200
@@ -288,8 +289,9 @@ class Player(Entity):
                         self.draw_power = 1
 
                     if keys[pygame.K_LALT]:
-                        self.bow_drawn = True
-                        self.create_bow()
+                        if not self.bow_drawn:
+                            self.bow_drawn = True
+                            self.create_bow()
                     else:
                         self.bow_drawn = False
                         self.destroy_attack()
@@ -299,6 +301,14 @@ class Player(Entity):
                         self.draw_power += self.draw_rate
                         if self.draw_power >= self.max_draw:
                             self.draw_power = self.max_draw
+
+                        if self.draw_power < self.max_draw:
+                            self.draw_bow(1)
+                        else:
+                            self.draw_bow(2)
+
+                    elif keys[pygame.K_LALT] and not keys[pygame.K_SPACE]:
+                        self.draw_bow(0)
 
             else:
                 # normal attack input
