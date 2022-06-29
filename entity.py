@@ -53,7 +53,7 @@ class Entity(pygame.sprite.Sprite):
 
 
 class Undead(Entity):
-    def __init__(self, undead_type, pos, groups, obstacle_sprites, attackable_sprites):
+    def __init__(self, undead_type, pos, groups, obstacle_sprites, attackable_sprites, trigger_death_particles):
         super().__init__(groups)
 
         # general
@@ -65,6 +65,7 @@ class Undead(Entity):
         self.status = 'down_idle'
         self.image = self.animations[self.status][self.frame_index]
         self.rect = self.image.get_rect(topleft=pos)
+        self.trigger_death_particles = trigger_death_particles
 
         # life
         self.life_duration = 20000
@@ -76,6 +77,9 @@ class Undead(Entity):
         self.obstacle_sprites = obstacle_sprites
         self.following = False
 
+        # entrance
+        self.trigger_death_particles((self.hitbox.centerx, self.hitbox.centery), 'smoke')
+
         # stats
         self_info = summoned_data[self.summoned_type]
         self.health = self_info['health']
@@ -85,6 +89,7 @@ class Undead(Entity):
         self.attack_radius = self_info['attack_radius']
         self.notice_radius = self_info['notice_radius']
         self.attack_type = self_info['attack_type']
+        self.follow_radius = 80
 
         # enemy interaction
         self.can_attack = True
@@ -103,6 +108,11 @@ class Undead(Entity):
         self.vulnerable = True
         self.hit_time = None
         self.invincibility_duration = 300
+
+        # death
+        self.dead = False
+        self.death_time = None
+        self.death_duration = 1000
 
     def import_summoned_assets(self):
         character_path = f'graphics/npcs/{self.summoned_type}/'
@@ -134,6 +144,24 @@ class Undead(Entity):
             direction = pygame.math.Vector2()
 
         return closest_distance, direction
+
+    def get_closest_enemy(self):
+        self_vec = pygame.math.Vector2(self.rect.center)
+        enemy_vec = pygame.math.Vector2()
+        distance = 0
+        closest_distance = 500
+        closest_enemy = None
+
+        for sprite in self.attackable_sprites:
+            if sprite.sprite_type == 'enemy':
+                enemy_vec = pygame.math.Vector2(sprite.rect.center)
+                distance = (enemy_vec - self_vec).magnitude()
+
+                if distance < closest_distance:
+                    closest_distance = distance
+                    closest_enemy = sprite
+
+        return closest_enemy
 
     def get_player_distance_direction(self, player):
         summoned_vec = pygame.math.Vector2(self.rect.center)
@@ -183,7 +211,7 @@ class Undead(Entity):
                 self.status = self.status.replace('_attack', '')
             self.following = False
 
-        elif distance_to_player > self.attack_radius:
+        elif distance_to_player > self.follow_radius:
             if 'attack' in self.status:
                 self.status = self.status.replace('_attack', '')
             if 'idle' in self.status:
@@ -200,7 +228,6 @@ class Undead(Entity):
 
     def actions(self, player):
         if 'attack' in self.status and self.attack_active:
-            print('made it')
             self.attack_logic(player)
 
         elif not 'idle' in self.status and not 'attack' in self.status:
@@ -245,8 +272,15 @@ class Undead(Entity):
             if current_time - self.hit_time >= self.invincibility_duration:
                 self.vulnerable = True
 
-        if current_time - self.time_alive >= self.life_duration:
-            self.die()
+        if not self.dead:
+            if current_time - self.time_alive >= self.life_duration:
+                self.dead = True
+                self.death_time = pygame.time.get_ticks()
+
+        if self.dead:
+            if current_time - self.death_time >= self.death_duration:
+                print('made it')
+                self.die()
 
     def move(self, speed, player):
         if self.direction.magnitude() != 0:
@@ -313,9 +347,8 @@ class Undead(Entity):
                         self.hitbox.top = sprite.hitbox.bottom
 
     def attack_logic(self, player):
-        for sprite in self.attackable_sprites:
-            if sprite.hitbox.colliderect(self.hitbox) and sprite.sprite_type == 'enemy':
-                sprite.get_damage(player, 'summoned')
+        enemy = self.get_closest_enemy()
+        enemy.get_damage(player, 'summoned')
 
         self.attack_active = False
 
@@ -331,20 +364,25 @@ class Undead(Entity):
 
     def check_death(self):
         if self.health <= 0:
-            self.die()
+            self.dead = True
+            self.death_time = pygame.time.get_ticks()
 
     def die(self):
         self.kill()
+        self.trigger_death_particles((self.hitbox.centerx, self.hitbox.centery), 'smoke')
 
     def update(self):
-        self.hit_reaction()
+        # self.hit_reaction()
         self.animate()
         self.cooldowns()
         self.check_death()
 
     def summoned_update(self, player):
-        self.move(self.speed, player)
-        self.get_status(player)
-        self.actions(player)
+        if not self.dead:
+            self.move(self.speed, player)
+            self.get_status(player)
+            self.actions(player)
+        else:
+            self.status = 'dead'
 
 

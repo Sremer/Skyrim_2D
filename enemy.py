@@ -156,7 +156,10 @@ class Enemy(Entity):
             closest_target.get_damage(monster_data[self.monster_name]['damage'])
 
         elif self.status == 'move':
-            self.direction = self.get_player_distance_direction(player)[1]
+            if self.target == 'player':
+                self.direction = self.get_player_distance_direction(player)[1]
+            else:
+                self.direction = self.get_friendly_sprite_direction()[1]
 
         else:
             self.direction = pygame.math.Vector2()
@@ -230,12 +233,12 @@ class Enemy(Entity):
             self.direction = self.direction.normalize()
 
         self.hitbox.x += self.direction.x * speed
-        self.collision_enemy('horizontal', player)
+        self.collision_enemy('horizontal')
         self.hitbox.y += self.direction.y * speed
-        self.collision_enemy('vertical', player)
+        self.collision_enemy('vertical')
         self.rect.center = self.hitbox.center
 
-    def collision_enemy(self, direction, player):
+    def collision_enemy(self, direction):
         if direction == 'horizontal':
             for sprite in self.obstacle_sprites:
                 if sprite.hitbox.colliderect(self.hitbox):
@@ -244,11 +247,12 @@ class Enemy(Entity):
                     if self.direction.x < 0:  # moving left
                         self.hitbox.left = sprite.hitbox.right
 
-            if player.hitbox.colliderect(self.hitbox):
-                if self.direction.x > 0:  # moving right
-                    self.hitbox.right = player.hitbox.left
-                if self.direction.x < 0:  # moving left
-                    self.hitbox.left = player.hitbox.right
+            for sprite in self.friendly_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.x > 0:  # moving right
+                        self.hitbox.right = sprite.hitbox.left
+                    if self.direction.x < 0:  # moving left
+                        self.hitbox.left = sprite.hitbox.right
 
         if direction == 'vertical':
             for sprite in self.obstacle_sprites:
@@ -258,11 +262,12 @@ class Enemy(Entity):
                     if self.direction.y < 0:  # moving up
                         self.hitbox.top = sprite.hitbox.bottom
 
-            if player.hitbox.colliderect(self.hitbox):
-                if self.direction.y > 0:  # moving down
-                    self.hitbox.bottom = player.hitbox.top
-                if self.direction.y < 0:  # moving up
-                    self.hitbox.top = player.hitbox.bottom
+            for sprite in self.friendly_sprites:
+                if sprite.hitbox.colliderect(self.hitbox):
+                    if self.direction.y > 0:  # moving down
+                        self.hitbox.bottom = sprite.hitbox.top
+                    if self.direction.y < 0:  # moving up
+                        self.hitbox.top = sprite.hitbox.bottom
 
     def update(self):
         self.hit_reaction()

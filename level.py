@@ -197,7 +197,7 @@ class Level:
             self.magic_player.lightning(self.player, cost, [self.visible_sprites, self.attack_sprites])
 
         if style == 'summon':
-            self.magic_player.summon(self.player, cost, [self.visible_sprites, self.friendly_sprites], self.obstacle_sprites, self.attackable_sprites, 'skeleton')
+            self.magic_player.summon(self.player, cost, [self.visible_sprites, self.friendly_sprites], self.obstacle_sprites, self.attackable_sprites, 'skeleton', self.trigger_death_particles)
 
     def create_attack(self, hand):
         self.current_attack.append(Weapon(self.player, [self.visible_sprites, self.attack_sprites], hand))
@@ -249,7 +249,6 @@ class Level:
             self.player.vulnerable = False
             self.player.hurt_time = pygame.time.get_ticks()
             self.animation_player.create_particles(attack_type, self.player.rect.center, [self.visible_sprites])
-            print(self.player.health)
 
     def trigger_death_particles(self, pos, particle_type):
         self.animation_player.create_particles(particle_type, pos, self.visible_sprites)
