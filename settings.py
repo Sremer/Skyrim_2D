@@ -8,7 +8,9 @@ HITBOX_OFFSET = {
     'object': -40,
     'grass': -10,
     'loot': -40,
-    'invisible': 0}
+    'invisible': 0,
+    'building': -80
+}
 
 # ui
 BAR_HEIGHT = 20

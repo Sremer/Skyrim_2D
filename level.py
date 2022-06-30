@@ -80,11 +80,13 @@ class Level:
         layout = {
             'grass': import_csv_layout('map/test_area_grass.csv'),
             'trees': import_csv_layout('map/test_area_trees.csv'),
-            'entities': import_csv_layout('map/test_area_Entities.csv')
+            'entities': import_csv_layout('map/test_area_Entities.csv'),
+            'buildings': import_csv_layout('map/test_area_buildings.csv')
         }
         graphics = {
             'grass': import_folder('graphics/grass'),
-            'objects': import_folder('graphics/objects')
+            'objects': import_folder('graphics/objects'),
+            'buildings': import_folder('graphics/buildings')
         }
 
         for style, layout in layout.items():
@@ -103,6 +105,10 @@ class Level:
                         if style == 'trees':
                             surf = graphics['objects'][int(col)]
                             Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'object', surf)
+
+                        if style == 'buildings':
+                            surf = graphics['buildings'][int(col)]
+                            Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'building', surf)
 
                         if style == 'entities':
                             if col == '0':
