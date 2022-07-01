@@ -1,8 +1,5 @@
-areas = {
-    '0': {
-        'name': 'test_area'
-    },
-    '1': {
-        'name': 'test_interior'
+saved_data = {
+    'doors': {
+        '0': {}
     }
 }

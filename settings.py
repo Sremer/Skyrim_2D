@@ -121,3 +121,7 @@ quest_master_database = {
         'money': 100
     }
 }
+
+door_key = {
+    '0': 'test_area,test_interior'
+}

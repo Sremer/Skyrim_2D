@@ -17,7 +17,7 @@ from npc import NPC, SpeechBox, Helper
 from quest import QuestChecker
 from text import TextGenerator
 from door import Door
-from saved_data import areas
+from saved_data import saved_data
 
 
 class Level:
@@ -58,6 +58,7 @@ class Level:
 
         # door sprites
         self.door_sprites = pygame.sprite.Group()
+        self.current_area = 'test_area'
 
         # sprite setup
         self.create_map()
@@ -118,6 +119,7 @@ class Level:
 
                         if style == 'doors':
                             Door((x, y), [self.door_sprites], 'door', col, self.player, self.load_area)
+                            saved_data['doors'][col][self.current_area] = (x, y)
 
                         if style == 'entities':
                             if col == '0':
@@ -163,8 +165,14 @@ class Level:
         # create loot menu
         self.loot_menu = LootMenu(self.player)
 
-    def load_area(self, area_num, new_player_pos):
-        area_name = areas[area_num]['name']
+    def load_area(self, area_num, player_offset):
+        areas = door_key[area_num]
+        areas = areas.split(',')
+        if self.current_area == areas[0]:
+            area_name = areas[1]
+        else:
+            area_name = areas[0]
+        self.current_area = area_name
 
         for sprite in self.visible_sprites:
             if sprite.sprite_type != 'player':
@@ -179,11 +187,11 @@ class Level:
         self.visible_sprites.change_floor(area_name)
 
         layout = {
+            'doors': import_csv_layout(f'map/{area_name}/{area_name}_doors.csv'),
             'grass': import_csv_layout(f'map/{area_name}/{area_name}_grass.csv'),
             'trees': import_csv_layout(f'map/{area_name}/{area_name}_trees.csv'),
             'entities': import_csv_layout(f'map/{area_name}/{area_name}_Entities.csv'),
             'buildings': import_csv_layout(f'map/{area_name}/{area_name}_buildings.csv'),
-            'doors': import_csv_layout(f'map/{area_name}/{area_name}_doors.csv'),
             'boundary': import_csv_layout(f'map/{area_name}/{area_name}_boundary.csv')
         }
 
@@ -213,10 +221,13 @@ class Level:
 
                         if style == 'doors':
                             Door((x, y), [self.door_sprites], 'door', col, self.player, self.load_area)
+                            saved_data['doors'][col][area_name] = (x, y)
 
                         if style == 'entities':
                             if col == '0':
-                                self.player.teleport_player(new_player_pos)
+                                new_x, new_y = saved_data['doors'][area_num][area_name]
+                                new_y += player_offset
+                                self.player.teleport_player((new_x, new_y))
 
                             elif col == '2':
                                 NPC((x, y), [self.visible_sprites, self.npc_sprites], 'villager', 'npc',

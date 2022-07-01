@@ -14,12 +14,12 @@ class Door(Tile):
 
     def check_collision(self):
         if self.player.hitbox.colliderect(self.hitbox):
-            if self.player.hitbox.y < self.hitbox.y:
-                offset = -64
+            if self.player.rect.y > self.rect.y:
+                offset = -40
             else:
-                offset = 64
+                offset = 40
 
-            self.load_area(self.door_num, (self.hitbox.x, self.hitbox.y))
+            self.load_area(self.door_num, offset)
 
     def update(self):
         self.check_collision()
