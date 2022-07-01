@@ -13,9 +13,11 @@ from magic import MagicPlayer
 from Loot import Loot
 from loot_menu import LootMenu
 from projectile import Projectile, Target, LongShotArrow
-from npc import NPC, SpeechBox,Helper
+from npc import NPC, SpeechBox, Helper
 from quest import QuestChecker
 from text import TextGenerator
+from door import Door
+from saved_data import areas
 
 
 class Level:
@@ -54,6 +56,9 @@ class Level:
         # friendly sprites
         self.friendly_sprites = pygame.sprite.Group()
 
+        # door sprites
+        self.door_sprites = pygame.sprite.Group()
+
         # sprite setup
         self.create_map()
 
@@ -78,12 +83,13 @@ class Level:
 
     def create_map(self):
         layout = {
-            'grass': import_csv_layout('map/test_area_grass.csv'),
-            'trees': import_csv_layout('map/test_area_trees.csv'),
-            'entities': import_csv_layout('map/test_area_Entities.csv'),
-            'buildings': import_csv_layout('map/test_area_buildings.csv')
+            'grass': import_csv_layout('map/test_area/test_area_grass.csv'),
+            'trees': import_csv_layout('map/test_area/test_area_trees.csv'),
+            'entities': import_csv_layout('map/test_area/test_area_Entities.csv'),
+            'buildings': import_csv_layout('map/test_area/test_area_buildings.csv'),
+            'doors': import_csv_layout('map/test_area/test_area_doors.csv')
         }
-        graphics = {
+        self.graphics = {
             'grass': import_folder('graphics/grass'),
             'objects': import_folder('graphics/objects'),
             'buildings': import_folder('graphics/buildings')
@@ -96,19 +102,22 @@ class Level:
                         x = col_index * TILESIZE
                         y = row_index * TILESIZE
                         if style == 'grass':
-                            random_grass_image = choice(graphics['grass'])
+                            random_grass_image = choice(self.graphics['grass'])
                             Tile((x, y), [self.visible_sprites,
                                           self.obstacle_sprites,
                                           self.attackable_sprites],
                                  'grass', random_grass_image)
 
                         if style == 'trees':
-                            surf = graphics['objects'][int(col)]
+                            surf = self.graphics['objects'][int(col)]
                             Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'object', surf)
 
                         if style == 'buildings':
-                            surf = graphics['buildings'][int(col)]
+                            surf = self.graphics['buildings'][int(col)]
                             Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'building', surf)
+
+                        if style == 'doors':
+                            Door((x, y), [self.door_sprites], 'door', col, self.player, self.load_area)
 
                         if style == 'entities':
                             if col == '0':
@@ -131,6 +140,7 @@ class Level:
                                     self.target_sprite,
                                     self.npc_sprites,
                                     self.create_speech)
+
                             elif col == '2':
                                 NPC((x, y), [self.visible_sprites, self.npc_sprites], 'villager', 'npc', self.obstacle_sprites)
 
@@ -152,6 +162,82 @@ class Level:
 
         # create loot menu
         self.loot_menu = LootMenu(self.player)
+
+    def load_area(self, area_num, new_player_pos):
+        area_name = areas[area_num]['name']
+
+        for sprite in self.visible_sprites:
+            if sprite.sprite_type != 'player':
+                sprite.kill()
+
+        for sprite in self.obstacle_sprites:
+            sprite.kill()
+
+        for sprite in self.door_sprites:
+            sprite.kill()
+
+        self.visible_sprites.change_floor(area_name)
+
+        layout = {
+            'grass': import_csv_layout(f'map/{area_name}/{area_name}_grass.csv'),
+            'trees': import_csv_layout(f'map/{area_name}/{area_name}_trees.csv'),
+            'entities': import_csv_layout(f'map/{area_name}/{area_name}_Entities.csv'),
+            'buildings': import_csv_layout(f'map/{area_name}/{area_name}_buildings.csv'),
+            'doors': import_csv_layout(f'map/{area_name}/{area_name}_doors.csv'),
+            'boundary': import_csv_layout(f'map/{area_name}/{area_name}_boundary.csv')
+        }
+
+        for style, layout in layout.items():
+            for row_index, row in enumerate(layout):
+                for col_index, col in enumerate(row):
+                    if col != '-1':
+                        x = col_index * TILESIZE
+                        y = row_index * TILESIZE
+                        if style == 'grass':
+                            random_grass_image = choice(self.graphics['grass'])
+                            Tile((x, y), [self.visible_sprites,
+                                          self.obstacle_sprites,
+                                          self.attackable_sprites],
+                                 'grass', random_grass_image)
+
+                        if style == 'boundary':
+                            Tile((x, y), [self.obstacle_sprites], 'invisible')
+
+                        if style == 'trees':
+                            surf = self.graphics['objects'][int(col)]
+                            Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'object', surf)
+
+                        if style == 'buildings':
+                            surf = self.graphics['buildings'][int(col)]
+                            Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'building', surf)
+
+                        if style == 'doors':
+                            Door((x, y), [self.door_sprites], 'door', col, self.player, self.load_area)
+
+                        if style == 'entities':
+                            if col == '0':
+                                self.player.teleport_player(new_player_pos)
+
+                            elif col == '2':
+                                NPC((x, y), [self.visible_sprites, self.npc_sprites], 'villager', 'npc',
+                                    self.obstacle_sprites)
+
+                            elif col == '3':
+                                NPC((x, y), [self.visible_sprites, self.npc_sprites], 'man-bun', 'npc',
+                                    self.obstacle_sprites)
+
+                            else:
+                                monster_name = 'squid'
+                                Enemy(
+                                    monster_name,
+                                    (x, y),
+                                    [self.visible_sprites, self.attackable_sprites],
+                                    self.obstacle_sprites,
+                                    self.damage_player,
+                                    self.trigger_death_particles,
+                                    self.add_exp,
+                                    self.create_loot,
+                                    self.friendly_sprites)
 
     # questing
 
@@ -399,6 +485,7 @@ class Level:
                 self.player.can_talk_time = pygame.time.get_ticks()
 
         else:
+            self.door_sprites.update()
             self.visible_sprites.update()
             self.visible_sprites.enemy_update(self.player)
             self.visible_sprites.npc_update(self.player)
@@ -425,6 +512,10 @@ class YSortCameraGroup(pygame.sprite.Group):
 
         # creating the floor
         self.floor_surf = pygame.image.load('graphics/test_area.png').convert()
+        self.floor_rect = self.floor_surf.get_rect(topleft=(0, 0))
+
+    def change_floor(self, new_floor):
+        self.floor_surf = pygame.image.load(f'graphics/{new_floor}.png').convert()
         self.floor_rect = self.floor_surf.get_rect(topleft=(0, 0))
 
     def custom_draw(self, player, vertical_change, horizontal_change):

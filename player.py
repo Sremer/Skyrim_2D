@@ -169,6 +169,8 @@ class Player(Entity):
         self.kill_target = kill_target
         self.target_sprite = target_sprite
 
+        # testing
+
     # general
 
     def import_player_assets(self):
@@ -517,6 +519,11 @@ class Player(Entity):
         self.collision_player('horizontal')
         self.hitbox.y += self.direction.y * speed
         self.collision_player('vertical')
+        self.rect.center = self.hitbox.center
+
+    def teleport_player(self, new_pos):
+        self.hitbox.x = new_pos[0]
+        self.hitbox.y = new_pos[1]
         self.rect.center = self.hitbox.center
 
     def collision_player(self, direction):

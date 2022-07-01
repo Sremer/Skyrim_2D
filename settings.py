@@ -9,7 +9,8 @@ HITBOX_OFFSET = {
     'grass': -10,
     'loot': -40,
     'invisible': 0,
-    'building': -80
+    'building': -80,
+    'door': -80
 }
 
 # ui
