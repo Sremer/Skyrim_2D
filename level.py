@@ -32,6 +32,12 @@ class Level:
         # NPC-Player interactions
         self.talking_paused = False
 
+        # map
+        self.up_cap = 0
+        self.down_cap = 15
+        self.left_cap = 0
+        self.right_cap = 15
+
         # loot system
         self.loot_paused = False
         self.loot_menu = None
@@ -83,7 +89,7 @@ class Level:
     # general
 
     def create_map(self):
-        layout = {
+        self.layout = {
             'grass': import_csv_layout('map/test_area/test_area_grass.csv'),
             'trees': import_csv_layout('map/test_area/test_area_trees.csv'),
             'entities': import_csv_layout('map/test_area/test_area_Entities.csv'),
@@ -96,74 +102,164 @@ class Level:
             'buildings': import_folder('graphics/buildings')
         }
 
-        for style, layout in layout.items():
+        for style, layout in self.layout.items():
             for row_index, row in enumerate(layout):
-                for col_index, col in enumerate(row):
-                    if col != '-1':
-                        x = col_index * TILESIZE
-                        y = row_index * TILESIZE
-                        if style == 'grass':
-                            random_grass_image = choice(self.graphics['grass'])
-                            Tile((x, y), [self.visible_sprites,
-                                          self.obstacle_sprites,
-                                          self.attackable_sprites],
-                                 'grass', random_grass_image)
+                if self.up_cap <= row_index < self.down_cap:
+                    for col_index, col in enumerate(row):
+                        if self.left_cap <= col_index < self.right_cap:
+                            if col != '-1':
+                                x = col_index * TILESIZE
+                                y = row_index * TILESIZE
+                                if style == 'grass':
+                                    random_grass_image = choice(self.graphics['grass'])
+                                    Tile((x, y), [self.visible_sprites,
+                                                  self.obstacle_sprites,
+                                                  self.attackable_sprites],
+                                         'grass', random_grass_image)
 
-                        if style == 'trees':
-                            surf = self.graphics['objects'][int(col)]
-                            Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'object', surf)
+                                if style == 'trees':
+                                    surf = self.graphics['objects'][int(col)]
+                                    Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'object', surf)
 
-                        if style == 'buildings':
-                            surf = self.graphics['buildings'][int(col)]
-                            Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'building', surf)
+                                if style == 'buildings':
+                                    surf = self.graphics['buildings'][int(col)]
+                                    Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'building', surf)
 
-                        if style == 'doors':
-                            Door((x, y), [self.door_sprites], 'door', col, self.player, self.load_area)
-                            saved_data['doors'][col][self.current_area] = (x, y)
+                                if style == 'doors':
+                                    Door((x, y), [self.door_sprites], 'door', col, self.player, self.load_area)
+                                    saved_data['doors'][col][self.current_area] = (x, y)
 
-                        if style == 'entities':
-                            if col == '0':
-                                self.player = Player((x, y),
-                                    [self.visible_sprites, self.friendly_sprites],
-                                    self.obstacle_sprites,
-                                    self.attackable_sprites,
-                                    self.loot_sprites,
-                                    self.create_attack,
-                                    self.destroy_attack,
-                                    self.create_magic,
-                                    self.show_loot,
-                                    self.create_smash,
-                                    self.create_bow,
-                                    self.draw_bow,
-                                    self.create_arrow,
-                                    self.change_camera,
-                                    self.create_target,
-                                    self.kill_target,
-                                    self.target_sprite,
-                                    self.npc_sprites,
-                                    self.create_speech)
+                                if style == 'entities':
+                                    if col == '0':
+                                        self.player = Player((x, y),
+                                            [self.visible_sprites, self.friendly_sprites],
+                                            self.obstacle_sprites,
+                                            self.attackable_sprites,
+                                            self.loot_sprites,
+                                            self.create_attack,
+                                            self.destroy_attack,
+                                            self.create_magic,
+                                            self.show_loot,
+                                            self.create_smash,
+                                            self.create_bow,
+                                            self.draw_bow,
+                                            self.create_arrow,
+                                            self.change_camera,
+                                            self.create_target,
+                                            self.kill_target,
+                                            self.target_sprite,
+                                            self.npc_sprites,
+                                            self.create_speech)
 
-                            elif col == '2':
-                                NPC((x, y), [self.visible_sprites, self.npc_sprites], 'villager', 'npc', self.obstacle_sprites)
+                                    elif col == '2':
+                                        NPC((x, y), [self.visible_sprites, self.npc_sprites], 'villager', 'npc', self.obstacle_sprites)
 
-                            elif col == '3':
-                                NPC((x, y), [self.visible_sprites, self.npc_sprites], 'man-bun', 'npc', self.obstacle_sprites)
+                                    elif col == '3':
+                                        NPC((x, y), [self.visible_sprites, self.npc_sprites], 'man-bun', 'npc', self.obstacle_sprites)
 
-                            else:
-                                monster_name = 'squid'
-                                Enemy(
-                                    monster_name,
-                                    (x, y),
-                                    [self.visible_sprites, self.attackable_sprites],
-                                    self.obstacle_sprites,
-                                    self.damage_player,
-                                    self.trigger_death_particles,
-                                    self.add_exp,
-                                    self.create_loot,
-                                    self.friendly_sprites)
+                                    else:
+                                        monster_name = 'squid'
+                                        Enemy(
+                                            monster_name,
+                                            (x, y),
+                                            [self.visible_sprites, self.attackable_sprites],
+                                            self.obstacle_sprites,
+                                            self.damage_player,
+                                            self.trigger_death_particles,
+                                            self.add_exp,
+                                            self.create_loot,
+                                            self.friendly_sprites)
 
         # create loot menu
         self.loot_menu = LootMenu(self.player)
+
+    def map_checker(self):
+        curr_x = self.player.rect.centerx // TILESIZE
+        curr_y = self.player.rect.centery // TILESIZE
+        distance_to_load = 3
+        need_to_load = False
+        up_bound = curr_y - 15
+        down_bound = curr_y + 15
+        right_bound = curr_x + 15
+        left_bound = curr_x - 15
+
+        if curr_x > (self.right_cap - distance_to_load):
+            left_bound = self.right_cap
+            self.right_cap += 15
+            right_bound = self.right_cap
+            need_to_load = True
+        elif curr_x < (self.left_cap + distance_to_load):
+            right_bound = self.left_cap
+            self.left_cap += 15
+            left_bound = self.left_cap
+            need_to_load = True
+
+        if curr_y > (self.down_cap - distance_to_load):
+            up_bound = self.down_cap
+            self.down_cap += 15
+            down_bound = self.down_cap
+            need_to_load = True
+        elif curr_y < (self.up_cap + distance_to_load):
+            down_bound = self.up_cap
+            self.up_cap -= 15
+            up_bound = self.up_cap
+            need_to_load = True
+
+        if need_to_load:
+            self.load_more_map(up_bound, down_bound, left_bound, right_bound)
+
+    def load_more_map(self, up_bound, down_bound, left_bound, right_bound):
+        for style, layout in self.layout.items():
+            for row_index, row in enumerate(layout):
+                if up_bound <= row_index < down_bound:
+                    for col_index, col in enumerate(row):
+                        if left_bound <= col_index < right_bound:
+                            if col != '-1':
+                                x = col_index * TILESIZE
+                                y = row_index * TILESIZE
+                                if style == 'grass':
+                                    random_grass_image = choice(self.graphics['grass'])
+                                    Tile((x, y), [self.visible_sprites,
+                                                  self.obstacle_sprites,
+                                                  self.attackable_sprites],
+                                         'grass', random_grass_image)
+
+                                if style == 'boundary':
+                                    Tile((x, y), [self.obstacle_sprites], 'invisible')
+
+                                if style == 'trees':
+                                    surf = self.graphics['objects'][int(col)]
+                                    Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'object', surf)
+
+                                if style == 'buildings':
+                                    surf = self.graphics['buildings'][int(col)]
+                                    Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'building', surf)
+
+                                if style == 'doors':
+                                    Door((x, y), [self.door_sprites], 'door', col, self.player, self.load_area)
+                                    saved_data['doors'][col][self.current_area] = (x, y)
+
+                                if style == 'entities':
+                                    if col == '2':
+                                        NPC((x, y), [self.visible_sprites, self.npc_sprites], 'villager', 'npc',
+                                            self.obstacle_sprites)
+
+                                    elif col == '3':
+                                        NPC((x, y), [self.visible_sprites, self.npc_sprites], 'man-bun', 'npc',
+                                            self.obstacle_sprites)
+
+                                    else:
+                                        monster_name = 'squid'
+                                        Enemy(
+                                            monster_name,
+                                            (x, y),
+                                            [self.visible_sprites, self.attackable_sprites],
+                                            self.obstacle_sprites,
+                                            self.damage_player,
+                                            self.trigger_death_particles,
+                                            self.add_exp,
+                                            self.create_loot,
+                                            self.friendly_sprites)
 
     def load_area(self, area_num, player_offset):
         areas = door_key[area_num]
@@ -186,7 +282,7 @@ class Level:
 
         self.visible_sprites.change_floor(area_name)
 
-        layout = {
+        self.layout = {
             'doors': import_csv_layout(f'map/{area_name}/{area_name}_doors.csv'),
             'grass': import_csv_layout(f'map/{area_name}/{area_name}_grass.csv'),
             'trees': import_csv_layout(f'map/{area_name}/{area_name}_trees.csv'),
@@ -195,7 +291,7 @@ class Level:
             'boundary': import_csv_layout(f'map/{area_name}/{area_name}_boundary.csv')
         }
 
-        for style, layout in layout.items():
+        for style, layout in self.layout.items():
             for row_index, row in enumerate(layout):
                 for col_index, col in enumerate(row):
                     if col != '-1':
@@ -505,6 +601,7 @@ class Level:
             self.player_attack_logic()
             self.remove_projectiles()
             self.text_generator.update()
+            self.map_checker()
 
             # set the menu back
             self.menu.menu_type = 'General'

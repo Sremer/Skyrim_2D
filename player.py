@@ -2,20 +2,23 @@ import pygame
 from settings import *
 from support import import_folder
 from entity import Entity
-from random import choice
 
 
 class Player(Entity):
-    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, loot_sprites,
-                 create_attack, destroy_attack, create_magic, show_loot, create_smash,
-                 create_bow, draw_bow, create_arrow, change_camera, create_target, kill_target, target_sprite,
-                 npc_sprites, create_speech):
+
+    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, change_camera, npc_sprites, create_speech, attack_handler, loot_handler):
         super().__init__(groups)
         self.image = pygame.image.load('graphics/test/player.png').convert_alpha()
         self.rect = self.image.get_rect(topleft=pos)
         self.hitbox = self.rect.inflate(-6, HITBOX_OFFSET['player'])
         self.sprite_type = 'player'
         self.visible = True
+
+        self.curr_area_num = 1
+
+        # handlers
+        self.attack_handler = attack_handler
+        self.loot_handler = loot_handler
 
         # npc interactions
         self.npc_sprites = npc_sprites
@@ -52,7 +55,6 @@ class Player(Entity):
         self.attack_time = None
         self.obstacle_sprites = obstacle_sprites
         self.attackable_sprites = attackable_sprites
-        self.loot_sprites = loot_sprites
         self.speed = 5
 
         # inventory
@@ -76,7 +78,6 @@ class Player(Entity):
         }
         self.quest_inventory = {}
         self.misc_inventory = {}
-        self.show_loot = show_loot
 
         # general attack
         self.attack_type = 'weapon'
@@ -93,8 +94,6 @@ class Player(Entity):
         self.offhand_weapon = None
 
         # weapon
-        self.create_attack = create_attack
-        self.destroy_attack = destroy_attack
         self.weapon_index = 0
         self.weapon = list(weapon_data.keys())[self.weapon_index]
         self.can_switch_weapon = True
@@ -103,9 +102,6 @@ class Player(Entity):
 
         # bows
         self.bow_drawn = False
-        self.create_bow = create_bow
-        self.create_arrow = create_arrow
-        self.draw_bow = draw_bow
         self.arrow_shot = False
         self.shot_time = None
         self.shot_cooldown = 200
@@ -115,7 +111,6 @@ class Player(Entity):
         self.max_draw = 60
 
         # magic
-        self.create_magic = create_magic
         self.magic_index = 0
         self.magic = list(magic_data.keys())[self.magic_index]
 
@@ -158,16 +153,12 @@ class Player(Entity):
         self.ground_smashing = False
         self.smash_time = None
         self.smash_cooldown = 500
-        self.create_smash = create_smash
         self.previous_attack_type = None
 
         # long shot
         self.change_camera = change_camera
         self.long_shot_active = False
         self.long_shot_key_pressed = False
-        self.create_target = create_target
-        self.kill_target = kill_target
-        self.target_sprite = target_sprite
 
         # testing
 
@@ -203,12 +194,12 @@ class Player(Entity):
                     if keys[pygame.K_LCTRL]:
                         self.long_shot_active = True
                         self.long_shot()
-                        self.create_target()
+                        self.attack_handler.create_target()
 
             else:
                 self.change_camera(None)
                 self.long_shot_active = False
-                self.kill_target()
+                self.attack_handler.kill_target()
 
                 # abilities input
                 if keys[pygame.K_LCTRL]:
@@ -268,22 +259,22 @@ class Player(Entity):
                 if self.long_shot_active:
                     if keys[pygame.K_LALT]:
                         self.bow_drawn = True
-                        self.create_bow()
+                        self.attack_handler.create_bow()
                     else:
                         self.bow_drawn = False
-                        self.destroy_attack()
+                        self.attack_handler.destroy_attack()
 
                     if keys[pygame.K_LALT] and keys[pygame.K_SPACE]:
                         if not self.arrow_shot and self.stamina >= 50:
                             self.stamina -= 50
                             self.arrow_shot = True
                             self.shot_time = pygame.time.get_ticks()
-                            self.create_arrow(None, 'long shot')
+                            self.attack_handler.create_arrow(None, 'long shot')
 
                 else:
                     if self.arrow_ready and not keys[pygame.K_SPACE]:
                         if not self.arrow_shot:
-                            self.create_arrow(self.draw_power)
+                            self.attack_handler.create_arrow(self.draw_power)
                             self.arrow_shot = True
                             self.shot_time = pygame.time.get_ticks()
 
@@ -293,10 +284,10 @@ class Player(Entity):
                     if keys[pygame.K_LALT]:
                         if not self.bow_drawn:
                             self.bow_drawn = True
-                            self.create_bow()
+                            self.attack_handler.create_bow()
                     else:
                         self.bow_drawn = False
-                        self.destroy_attack()
+                        self.attack_handler.destroy_attack()
 
                     if keys[pygame.K_LALT] and keys[pygame.K_SPACE]:
                         self.arrow_ready = True
@@ -305,12 +296,12 @@ class Player(Entity):
                             self.draw_power = self.max_draw
 
                         if self.draw_power < self.max_draw:
-                            self.draw_bow(1)
+                            self.attack_handler.draw_bow(1)
                         else:
-                            self.draw_bow(2)
+                            self.attack_handler.draw_bow(2)
 
                     elif keys[pygame.K_LALT] and not keys[pygame.K_SPACE]:
-                        self.draw_bow(0)
+                        self.attack_handler.draw_bow(0)
 
             else:
                 # normal attack input
@@ -320,7 +311,7 @@ class Player(Entity):
                     if self.offhand_attack_type == 'weapon':
                         self.attacking = True
                         self.attack_time = pygame.time.get_ticks()
-                        self.create_attack('Off-Hand')
+                        self.attack_handler.create_attack('Off-Hand')
                         self.current_weapon = self.offhand_weapon
                     elif self.offhand_attack_type == 'magic':
                         self.attacking = True
@@ -328,7 +319,7 @@ class Player(Entity):
                         style = self.offhand_magic
                         strength = magic_data[self.offhand_magic]['strength'] + self.stats['magic']
                         cost = magic_data[self.offhand_magic]['cost']
-                        self.create_magic(style, strength, cost)
+                        self.attack_handler.create_magic(style, strength, cost)
                     else:
                         self.attacking = True
                         self.attack_time = pygame.time.get_ticks()
@@ -338,7 +329,7 @@ class Player(Entity):
                     if self.attack_type == 'weapon':
                         self.attacking = True
                         self.attack_time = pygame.time.get_ticks()
-                        self.create_attack('Main-Hand')
+                        self.attack_handler.create_attack('Main-Hand')
                         self.current_weapon = self.weapon
                     elif self.attack_type == 'magic':
                         self.attacking = True
@@ -346,7 +337,7 @@ class Player(Entity):
                         style = self.magic
                         strength = magic_data[self.magic]['strength'] + self.stats['magic']
                         cost = magic_data[self.magic]['cost']
-                        self.create_magic(style, strength, cost)
+                        self.attack_handler.create_magic(style, strength, cost)
                     else:
                         self.attacking = True
                         self.attack_time = pygame.time.get_ticks()
@@ -395,7 +386,7 @@ class Player(Entity):
         if self.attacking:
             if current_time - self.attack_time >= self.attack_cooldown + weapon_data[self.current_weapon]['cooldown']:
                 self.attacking = False
-                self.destroy_attack()
+                self.attack_handler.destroy_attack()
 
         if not self.can_talk:
             if current_time - self.can_talk_time >= self.can_talk_cooldown:
@@ -528,9 +519,8 @@ class Player(Entity):
 
     def collision_player(self, direction):
         if direction == 'horizontal':
-            for sprite in self.loot_sprites:
-                if sprite.hitbox.colliderect(self.hitbox):
-                    self.show_loot(sprite)
+
+            self.loot_handler.loot_player_collision()
 
             for sprite in self.obstacle_sprites:
                 if sprite.hitbox.colliderect(self.hitbox):
@@ -554,9 +544,8 @@ class Player(Entity):
                         self.hitbox.left = sprite.hitbox.right
 
         if direction == 'vertical':
-            for sprite in self.loot_sprites:
-                if sprite.hitbox.colliderect(self.hitbox):
-                    self.show_loot(sprite)
+
+            self.loot_handler.loot_player_collision()
 
             for sprite in self.obstacle_sprites:
                 if sprite.hitbox.colliderect(self.hitbox):
@@ -616,7 +605,7 @@ class Player(Entity):
             self.attack_type = 'smash'
 
             self.smash_time = pygame.time.get_ticks()
-            self.create_smash()
+            self.attack_handler.create_smash()
 
     def long_shot(self):
         direction = self.status.split('_')[0]
@@ -661,5 +650,7 @@ class Player(Entity):
             self.dash_animate()
 
         self.energy_recovery()
+
+
 
         # self.level_up()

@@ -5,12 +5,15 @@ from support import *
 
 
 class Enemy(Entity):
-    def __init__(self, monster_name, pos, groups, obstacle_sprites, damage_player,
-                 trigger_death_particles, add_exp, create_loot, friendly_sprites):
+    def __init__(self, monster_name, pos, groups, obstacle_sprites, friendly_sprites, attack_handler, loot_handler):
 
         # general setup
         super().__init__(groups)
         self.sprite_type = 'enemy'
+
+        # handlers
+        self.attack_handler = attack_handler
+        self.loot_handler = loot_handler
 
         # graphics setup
         self.import_graphics(monster_name)
@@ -45,10 +48,6 @@ class Enemy(Entity):
         self.can_attack = True
         self.attack_time = None
         self.attack_cooldown = 400
-        self.damage_player = damage_player
-        self.trigger_death_particles = trigger_death_particles
-        self.add_exp = add_exp
-        self.create_loot = create_loot
         self.target = 'player'
 
         # invincibility timer
@@ -148,7 +147,7 @@ class Enemy(Entity):
     def actions(self, player):
         if self.status == 'attack' and self.target == 'player':
             self.attack_time = pygame.time.get_ticks()
-            self.damage_player(self.attack_damage, self.attack_type)
+            self.attack_handler.damage_player(self.attack_damage, self.attack_type)
 
         elif self.status == 'attack' and self.target == 'other':
             self.attack_time = pygame.time.get_ticks()
@@ -220,9 +219,9 @@ class Enemy(Entity):
         if self.health <= 0:
             pos = self.hitbox.center
             self.kill()
-            self.trigger_death_particles(self.rect.center, self.monster_name)
-            self.add_exp(self.exp)
-            self.create_loot(pos)
+            self.attack_handler.trigger_death_particles(self.rect.center, self.monster_name)
+            self.attack_handler.add_exp(self.exp)
+            self.loot_handler.create_loot(pos)
 
     def hit_reaction(self):
         if not self.vulnerable:

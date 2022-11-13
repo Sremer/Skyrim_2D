@@ -1,6 +1,7 @@
 import pygame, sys
 from settings import *
 from level import Level
+from GameHandler import GameHandler
 
 
 class Game:
@@ -12,7 +13,8 @@ class Game:
         pygame.display.set_caption('Skyrim 2D')
         self.clock = pygame.time.Clock()
 
-        self.level = Level()
+        # self.level = Level()
+        self.gameHandler = GameHandler()
 
     def run(self):
         while True:
@@ -23,10 +25,12 @@ class Game:
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_e:
-                        self.level.toggle_menu()
+                        #self.level.toggle_menu()
+                        self.gameHandler.toggle_menu()
 
             self.screen.fill('black')
-            self.level.run()
+            self.gameHandler.run()
+            #self.level.run()
             pygame.display.update()
             self.clock.tick(FPS)
 
