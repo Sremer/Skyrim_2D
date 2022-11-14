@@ -5,15 +5,11 @@ from support import *
 
 
 class Enemy(Entity):
-    def __init__(self, monster_name, pos, groups, obstacle_sprites, friendly_sprites, attack_handler, loot_handler):
+    def __init__(self, monster_name, pos, groups, obstacle_sprites, friendly_sprites):
 
         # general setup
         super().__init__(groups)
         self.sprite_type = 'enemy'
-
-        # handlers
-        self.attack_handler = attack_handler
-        self.loot_handler = loot_handler
 
         # graphics setup
         self.import_graphics(monster_name)

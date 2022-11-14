@@ -3,10 +3,8 @@ from settings import *
 
 
 class Area:
-    def __init__(self, area_num, player, vertical_change, horizontal_change):
+    def __init__(self, area_num, vertical_change, horizontal_change):
         self.area_num = area_num
-
-        self.player = player
 
         self.vertical_change = vertical_change
         self.horizontal_change = horizontal_change
@@ -26,14 +24,14 @@ class Area:
     def unload_area(self):
         pass
 
-    def draw(self):
-        self.visible_sprites.custom_draw(self.player, self.vertical_change, self.horizontal_change)
+    def draw(self, player):
+        self.visible_sprites.custom_draw(player, self.vertical_change, self.horizontal_change)
 
-    def update(self):
+    def update(self, player):
         self.visible_sprites.update()
-        self.visible_sprites.enemy_update(self.player)
-        self.visible_sprites.npc_update(self.player)
-        self.visible_sprites.summoned_update(self.player)
+        self.visible_sprites.enemy_update(player)
+        self.visible_sprites.npc_update(player)
+        self.visible_sprites.summoned_update(player)
 
 
 class YSortCameraGroup(pygame.sprite.Group):

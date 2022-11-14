@@ -25,11 +25,13 @@ class GameHandler:
         self.horizontal_change = 1
 
         self.map = {}
+        self.current_areas = []
+
         self.player = None
 
-        self.game_paused = False
+        self.create_map()
 
-        self.current_areas = []
+        self.game_paused = False
 
         # user interface
         self.ui = UI()
@@ -54,7 +56,12 @@ class GameHandler:
         self.create_quest_database()
         self.quest_checker = QuestChecker(self.quest_database)
 
-        self.create_map()
+        self.player.assign_handlers(self.attack_handler, self.loot_handler)
+
+        for area in self.map.items():
+            for sprite in area[1].visible_sprites:
+                if sprite.sprite_type == "enemy":
+                    sprite.assign_handlers(self.attack_handler, self.loot_handler)
 
     def create_map(self):
         self.layout = {
@@ -84,7 +91,7 @@ class GameHandler:
                     area_num = num_areas * (int(y / area_y_size) + 1) - (num_areas - (int(x / area_x_size) + 1))
 
                     if area_num not in self.map:
-                        self.map[area_num] = Area(area_num, self.player, self.vertical_change, self.horizontal_change)
+                        self.map[area_num] = Area(area_num, self.vertical_change, self.horizontal_change)
 
                     if col != '-1':
                         if style == 'grass':
@@ -118,9 +125,7 @@ class GameHandler:
                                                      self.map[area_num].attackable_sprites,
                                                      self.change_camera,
                                                      self.map[area_num].npc_sprites,
-                                                     self.create_speech,
-                                                     self.attack_handler,
-                                                     self.loot_handler)
+                                                     self.create_speech)
 
                                 self.player.curr_area_num = area_num
 
@@ -139,9 +144,7 @@ class GameHandler:
                                     (x, y),
                                     [self.map[area_num].visible_sprites, self.map[area_num].attackable_sprites],
                                     self.map[area_num].obstacle_sprites,
-                                    self.map[area_num].friendly_sprites,
-                                    self.attack_handler,
-                                    self.loot_handler)
+                                    self.map[area_num].friendly_sprites)
 
         self.current_areas.append(self.map[self.player.curr_area_num])
 
@@ -257,7 +260,7 @@ class GameHandler:
 
     def run(self):
         for area in self.current_areas:
-            area.draw()
+            area.draw(self.player)
         self.attack_handler.draw()
         self.ui.display(self.player)
         self.level_up()
@@ -273,7 +276,7 @@ class GameHandler:
 
         else:
             for area in self.current_areas:
-                area.update()
+                area.update(self.player)
             self.ui.display(self.player)
             self.attack_handler.update()
             self.text_generator.update()

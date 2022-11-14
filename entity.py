@@ -11,11 +11,18 @@ class Entity(pygame.sprite.Sprite):
         self.animation_speed = 0.15
         self.direction = pygame.math.Vector2()
 
+        self.attack_handler = None
+        self.loot_handler = None
+
     def import_graphics(self, name):
         self.animations = {'idle': [], 'move': [], 'attack': []}
         main_path = f'graphics/npcs/{name}/'
         for animation in self.animations.keys():
             self.animations[animation] = import_folder(main_path + animation)
+
+    def assign_handlers(self, attack_handler, loot_handler):
+        self.attack_handler = attack_handler
+        self.loot_handler = loot_handler
 
     def move(self, speed):
         if self.direction.magnitude() != 0:

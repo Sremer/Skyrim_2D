@@ -6,7 +6,7 @@ from entity import Entity
 
 class Player(Entity):
 
-    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, change_camera, npc_sprites, create_speech, attack_handler, loot_handler):
+    def __init__(self, pos, groups, obstacle_sprites, attackable_sprites, change_camera, npc_sprites, create_speech):
         super().__init__(groups)
         self.image = pygame.image.load('graphics/test/player.png').convert_alpha()
         self.rect = self.image.get_rect(topleft=pos)
@@ -15,10 +15,6 @@ class Player(Entity):
         self.visible = True
 
         self.curr_area_num = 1
-
-        # handlers
-        self.attack_handler = attack_handler
-        self.loot_handler = loot_handler
 
         # npc interactions
         self.npc_sprites = npc_sprites
@@ -180,6 +176,10 @@ class Player(Entity):
                and not self.ground_smashing \
                and not self.dashing \
                and not self.dash_flickering
+
+    def assign_handlers(self, attack_handler, loot_handler):
+        self.attack_handler = attack_handler
+        self.loot_handler = loot_handler
 
     def input(self):
         if self.not_doing_something():
