@@ -120,7 +120,7 @@ class GameHandler:
                         if style == 'entities':
                             if col == '0':
                                 self.player = Player((x, y),
-                                                     [self.map[area_num].friendly_sprites],
+                                                     [self.map[area_num].visible_sprites, self.map[area_num].friendly_sprites],
                                                      self.map[area_num].obstacle_sprites,
                                                      self.map[area_num].attackable_sprites,
                                                      self.change_camera,
@@ -271,7 +271,7 @@ class GameHandler:
         if self.game_paused:
             self.menu.display(self.active_quests)
 
-        if self.loot_handler.loot_paused:
+        elif self.loot_handler.loot_paused:
             self.loot_handler.loot_pause()
 
         else:
