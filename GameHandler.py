@@ -311,7 +311,6 @@ class GameHandler:
             self.text_generator.add_to_queue('level up')
 
     def run(self):
-        print(len(self.current_areas))
         self.draw_floor()
         for area in self.current_areas:
             area.draw(self.player)
