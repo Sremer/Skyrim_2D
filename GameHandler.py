@@ -1,4 +1,6 @@
 import pygame
+
+import player
 from settings import *
 from support import import_folder, import_csv_layout
 from random import choice, randint
@@ -21,6 +23,9 @@ class GameHandler:
 
     def __init__(self):
 
+        self.num_areas = 3
+        self.area_y_size = None
+        self.area_x_size = None
         self.vertical_change = 1
         self.horizontal_change = 1
 
@@ -63,6 +68,8 @@ class GameHandler:
                 if sprite.sprite_type == "enemy":
                     sprite.assign_handlers(self.attack_handler, self.loot_handler)
 
+    # general
+
     def create_map(self):
         self.layout = {
             'grass': import_csv_layout('map/test_area/test_area_grass.csv'),
@@ -78,20 +85,24 @@ class GameHandler:
         }
 
         for style, layout in self.layout.items():
-            num_areas = 5
 
-            area_x_size = len(layout) * TILESIZE / num_areas
-            area_y_size = len(layout[0]) * TILESIZE / num_areas
+            self.area_x_size = len(layout) * TILESIZE / self.num_areas
+            self.area_y_size = len(layout[0]) * TILESIZE / self.num_areas
 
             for row_index, row in enumerate(layout):
                 for col_index, col in enumerate(row):
                     x = col_index * TILESIZE
                     y = row_index * TILESIZE
 
-                    area_num = num_areas * (int(y / area_y_size) + 1) - (num_areas - (int(x / area_x_size) + 1))
+                    area_num = self.num_areas * (int(y / self.area_y_size) + 1) - (self.num_areas - (int(x / self.area_x_size) + 1))
 
                     if area_num not in self.map:
-                        self.map[area_num] = Area(area_num, self.vertical_change, self.horizontal_change)
+                        down_cap = (int(y / self.area_y_size) + 1) * self.area_y_size
+                        up_cap = int(y / self.area_y_size) * self.area_y_size
+                        right_cap = (int(x / self.area_x_size) + 1) * self.area_x_size
+                        left_cap = int(x / self.area_x_size) * self.area_x_size
+
+                        self.map[area_num] = Area(area_num, self.vertical_change, self.horizontal_change, up_cap, down_cap, left_cap, right_cap)
 
                     if col != '-1':
                         if style == 'grass':
@@ -184,6 +195,47 @@ class GameHandler:
             else:
                 self.horizontal_change = 1
 
+    def draw_floor(self):
+        display_surface = pygame.display.get_surface()
+        half_width = display_surface.get_size()[0] // 2
+        half_height = display_surface.get_size()[1] // 2
+        offset = pygame.math.Vector2()
+
+        # creating the floor
+        floor_surf = pygame.image.load('graphics/test_area.png').convert()
+        floor_rect = floor_surf.get_rect(topleft=(0, 0))
+
+        # getting the offset
+        offset.x = self.player.rect.centerx - (half_width * self.horizontal_change)
+        offset.y = self.player.rect.centery - (half_height * self.vertical_change)
+
+        # drawing the floor
+        floor_offset_pos = floor_rect.topleft - offset
+        display_surface.blit(floor_surf, floor_offset_pos)
+
+    def area_updater(self):
+        self.player.curr_area_num = self.num_areas * (int(self.player.hitbox.y / self.area_y_size) + 1) - (self.num_areas - (int(self.player.hitbox.x / self.area_x_size) + 1))
+
+        if 25 >= self.player.hitbox.y - self.map[self.player.curr_area_num].up_border > 0:
+            if self.player.curr_area_num - self.num_areas > 0:
+                if self.map[self.player.curr_area_num - self.num_areas] not in self.current_areas:
+                    self.current_areas.append(self.map[self.player.curr_area_num - self.num_areas])
+
+        if 25 >= self.map[self.player.curr_area_num].down_border - self.player.hitbox.y > 0:
+            if self.player.curr_area_num + self.num_areas <= (self.num_areas * self.num_areas):
+                if self.map[self.player.curr_area_num + self.num_areas] not in self.current_areas:
+                    self.current_areas.append(self.map[self.player.curr_area_num + self.num_areas])
+
+        if 25 >= self.player.hitbox.x - self.map[self.player.curr_area_num].left_border > 0:
+            if self.player.curr_area_num - 1 > 0:
+                if self.map[self.player.curr_area_num - 1] not in self.current_areas:
+                    self.current_areas.append(self.map[self.player.curr_area_num - 1])
+
+        if 25 >= self.map[self.player.curr_area_num].right_border - self.player.hitbox.x > 0:
+            if self.player.curr_area_num + 1 <= (self.num_areas * self.num_areas):
+                if self.map[self.player.curr_area_num + 1] not in self.current_areas:
+                    self.current_areas.append(self.map[self.player.curr_area_num + 1])
+
     # questing
 
     def create_quest_database(self):
@@ -259,6 +311,8 @@ class GameHandler:
             self.text_generator.add_to_queue('level up')
 
     def run(self):
+        print(len(self.current_areas))
+        self.draw_floor()
         for area in self.current_areas:
             area.draw(self.player)
         self.attack_handler.draw()
@@ -275,6 +329,7 @@ class GameHandler:
             self.loot_handler.loot_pause()
 
         else:
+            self.area_updater()
             for area in self.current_areas:
                 area.update(self.player)
             self.ui.display(self.player)
